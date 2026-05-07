@@ -232,6 +232,71 @@ tbody tr:last-child td { border-bottom: none; }
   .main { padding: 20px; }
   .info-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== 弥生プレビュー ===== */
+.yayoi-header {
+  background: #003366; color: #fff;
+  padding: 12px 18px 10px; border-radius: 6px 6px 0 0;
+  display: flex; align-items: center; gap: 12px;
+}
+.yayoi-header h2 { font-size: 15px; font-weight: 700; letter-spacing: 0.03em; }
+.yayoi-header .yayoi-sub { font-size: 11px; opacity: 0.75; }
+.yayoi-toolbar {
+  background: #dce6f1; border: 1px solid #aac0d8; border-top: none;
+  padding: 8px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+.yayoi-chip {
+  padding: 4px 12px; background: #fff; border: 1px solid #aac0d8;
+  border-radius: 3px; font-size: 12px; cursor: pointer; color: #003366; font-weight: 600;
+}
+.yayoi-chip.active { background: #003366; color: #fff; border-color: #003366; }
+.yayoi-project-select {
+  padding: 4px 8px; border: 1px solid #aac0d8; border-radius: 3px;
+  font-size: 12px; font-family: inherit; background: #fff; color: #003366;
+}
+.yayoi-btn-csv {
+  margin-left: auto; padding: 5px 14px; background: #fff;
+  border: 1px solid #003366; border-radius: 3px; font-size: 12px;
+  color: #003366; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.yayoi-btn-csv:hover { background: #003366; color: #fff; }
+
+.yayoi-wrap {
+  border: 1px solid #aac0d8; border-top: none;
+  border-radius: 0 0 6px 6px; overflow: auto;
+  max-height: calc(100vh - 280px);
+}
+.yayoi-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px; font-family: "MS Gothic","ＭＳ ゴシック","Noto Sans JP",monospace;
+  white-space: nowrap;
+}
+.yayoi-table thead tr { background: #c9d8ea; }
+.yayoi-table thead th {
+  padding: 5px 8px; border: 1px solid #8badc8;
+  font-size: 11px; font-weight: 700; color: #003366;
+  text-align: center; white-space: nowrap;
+}
+.yayoi-table tbody tr { cursor: pointer; }
+.yayoi-table tbody tr:nth-child(even) { background: #f0f5fb; }
+.yayoi-table tbody tr:hover { background: #d0e3f5; }
+.yayoi-table td {
+  padding: 4px 8px; border: 1px solid #c5d4e3;
+  color: #1a1a1a;
+}
+.yayoi-table td.num { text-align: right; font-weight: 600; color: #003366; }
+.yayoi-table td.tax-cell { text-align: center; font-size: 10px; color: #555; }
+.yayoi-table td.inv-cell { font-size: 10px; color: #444; }
+.yayoi-table td.project-cell { color: #6b7280; font-size: 10px; }
+.yayoi-table .total-row td {
+  background: #003366; color: #fff; font-weight: 700; border-color: #003366;
+}
+.yayoi-table .total-row td.num { color: #ffe; }
+.yayoi-info-bar {
+  background: #f0f5fb; border: 1px solid #aac0d8; border-bottom: none;
+  padding: 7px 14px; font-size: 12px; color: #003366; display: flex; gap: 20px;
+}
+.yayoi-info-bar span strong { font-weight: 700; }
 </style>
 </head>
 <body>
@@ -242,7 +307,8 @@ tbody tr:last-child td { border-bottom: none; }
       <h1>経費精算</h1>
       <span class="demo-tag">DEMO v0.2</span>
     </div>
-    <div class="nav-item active">📋 案件一覧</div>
+    <div class="nav-item active" id="nav-list">📋 案件一覧</div>
+    <div class="nav-item" id="nav-yayoi">📒 弥生プレビュー</div>
     <div class="nav-item">✅ 承認待ち</div>
     <div class="nav-item">📊 集計レポート</div>
     <div class="nav-item">⚙️ 設定</div>
@@ -250,6 +316,7 @@ tbody tr:last-child td { border-bottom: none; }
   </aside>
 
   <main class="main">
+  <section id="section-list">
     <div class="page-header">
       <div>
         <h1 class="page-title">案件一覧</h1>
@@ -308,6 +375,58 @@ tbody tr:last-child td { border-bottom: none; }
         <tbody id="rows"></tbody>
       </table>
     </div>
+  </section>
+
+  <!-- 弥生プレビューセクション -->
+  <section id="section-yayoi" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">弥生プレビュー</h1>
+        <p class="page-subtitle">仕訳日記帳イメージ（弥生会計インポート形式）</p>
+      </div>
+    </div>
+
+    <div class="yayoi-header">
+      <div>
+        <h2>📒 仕訳日記帳</h2>
+        <div class="yayoi-sub">弥生会計 Professional インポートイメージ</div>
+      </div>
+    </div>
+    <div class="yayoi-toolbar">
+      <span style="font-size:11px;font-weight:700;color:#003366;">表示：</span>
+      <div class="yayoi-chip active" data-yfilter="all">すべて</div>
+      <div class="yayoi-chip" data-yfilter="approved">承認済みのみ</div>
+      <span style="font-size:11px;font-weight:700;color:#003366;margin-left:8px;">案件：</span>
+      <select class="yayoi-project-select" id="yayoi-project-select">
+        <option value="all">すべての案件</option>
+      </select>
+      <button class="yayoi-btn-csv" id="btn-yayoi-csv">📥 弥生CSV出力</button>
+    </div>
+    <div class="yayoi-info-bar" id="yayoi-info-bar">
+      <span>件数：<strong id="yayoi-count">—</strong></span>
+      <span>合計金額：<strong id="yayoi-total">—</strong></span>
+    </div>
+    <div class="yayoi-wrap">
+      <table class="yayoi-table">
+        <thead>
+          <tr>
+            <th style="width:42px;">伝票No.</th>
+            <th style="width:52px;">日付</th>
+            <th style="width:80px;">借方科目</th>
+            <th style="width:90px;">税区分</th>
+            <th style="width:75px;">借方金額</th>
+            <th style="width:60px;">貸方科目</th>
+            <th style="width:75px;">貸方金額</th>
+            <th>摘要</th>
+            <th style="width:120px;">インボイス番号</th>
+            <th style="width:130px;">案件名</th>
+          </tr>
+        </thead>
+        <tbody id="yayoi-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
   </main>
 </div>
 
@@ -386,6 +505,31 @@ tbody tr:last-child td { border-bottom: none; }
 </div>
 
 <script>
+// ============================================================
+// ★ データを入れる場所はここです ★
+//
+// 各プロジェクト（案件）の構造：
+//   id          : 管理用ID（例: 'EXP-2604-P04'）
+//   projectName : 案件名
+//   ledgerNo    : 帳合No.
+//   applicant   : 申請者名
+//   date        : 提出日（例: '2026-04-10'）
+//   purpose     : 目的（例: '撮影'）
+//   budget      : 予算額（数字のみ・円）
+//   settled     : 精算額（数字のみ・円）
+//   advance     : 仮払残高（数字のみ・円）
+//   status      : 'pending'（承認待ち）/ 'approved'（承認済み）/ 'rejected'（差し戻し）
+//   items       : 明細の配列（下記）
+//
+// 明細1件の構造：
+//   category    : 科目（'会議費'/'旅費交通費①'/'旅費交通費②'/'車両費'/'制作諸経費'/'通信費'/'郵便・宅急便代'/'その他'）
+//   description : 摘要
+//   monthDay    : 月日（例: '10/21'）
+//   receiptNo   : レシートNo.（数字 or ''）
+//   amount      : 金額（数字のみ・円）
+//   tax         : 税率（'10%' / '8%軽減' / '非課税'）
+//   invoice     : インボイス番号（例: 'T1234567890123'）または ''
+// ============================================================
 // ===================== データ =====================
 const dummyProjects = [
   {
@@ -782,7 +926,158 @@ document.querySelectorAll('.filter-chip').forEach(chip => {
 
 document.getElementById('nav-to-index').addEventListener('click', () => { window.location.href = 'index.html'; });
 
+// ===================== ナビ切り替え =====================
+function showSection(name) {
+  document.getElementById('section-list').style.display  = name === 'list'  ? '' : 'none';
+  document.getElementById('section-yayoi').style.display = name === 'yayoi' ? '' : 'none';
+  document.getElementById('nav-list').classList.toggle('active',  name === 'list');
+  document.getElementById('nav-yayoi').classList.toggle('active', name === 'yayoi');
+  if (name === 'yayoi') renderYayoi();
+}
+document.getElementById('nav-list').addEventListener('click', () => showSection('list'));
+document.getElementById('nav-yayoi').addEventListener('click', () => showSection('yayoi'));
+
+// ===================== 弥生プレビュー =====================
+const CATEGORY_TO_YAYOI = {
+  '会議費':      '会議費',
+  '旅費交通費①': '旅費交通費',
+  '旅費交通費②': '旅費交通費',
+  '車両費':      '車両費',
+  '制作諸経費':  '制作諸経費',
+  '通信費':      '通信費',
+  '郵便・宅急便代': '荷造運搬費',
+  'その他':      '雑費',
+};
+const TAX_TO_YAYOI = {
+  '10%':   '課税仕入10%',
+  '8%軽減': '軽減税率仕入8%',
+  '非課税': '非課税仕入',
+};
+
+let yayoiFilter = 'all';
+let yayoiProject = 'all';
+
+// プロジェクトセレクトを初期化
+function initYayoiSelect() {
+  const sel = document.getElementById('yayoi-project-select');
+  sel.innerHTML = '<option value="all">すべての案件</option>';
+  dummyProjects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.projectName;
+    sel.appendChild(opt);
+  });
+}
+
+function getYayoiRows() {
+  let projects = dummyProjects;
+  if (yayoiFilter === 'approved') projects = projects.filter(p => p.status === 'approved');
+  if (yayoiProject !== 'all')    projects = projects.filter(p => p.id === yayoiProject);
+  const rows = [];
+  projects.forEach(p => {
+    p.items.forEach(it => rows.push({ project: p, item: it }));
+  });
+  return rows;
+}
+
+function renderYayoi() {
+  const rows  = getYayoiRows();
+  const tbody = document.getElementById('yayoi-rows');
+  const total = rows.reduce((s, r) => s + (r.item.amount || 0), 0);
+
+  document.getElementById('yayoi-count').textContent = rows.length + ' 件';
+  document.getElementById('yayoi-total').textContent = '¥' + total.toLocaleString();
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#6b7280;">該当するデータがありません</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => {
+    const it = r.item;
+    const p  = r.project;
+    const debitSubj = CATEGORY_TO_YAYOI[it.category] || it.category;
+    const taxLabel  = TAX_TO_YAYOI[it.tax] || it.tax;
+    return `
+    <tr data-project-id="${p.id}">
+      <td style="text-align:center;">${i + 1}</td>
+      <td style="text-align:center;">${it.monthDay || '—'}</td>
+      <td>${debitSubj}</td>
+      <td class="tax-cell">${taxLabel}</td>
+      <td class="num">¥${(it.amount || 0).toLocaleString()}</td>
+      <td style="text-align:center;">未払金</td>
+      <td class="num">¥${(it.amount || 0).toLocaleString()}</td>
+      <td>${it.description || ''}</td>
+      <td class="inv-cell">${it.invoice || ''}</td>
+      <td class="project-cell">${p.projectName}</td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML += `
+    <tr class="total-row">
+      <td colspan="4" style="text-align:center;">合　計</td>
+      <td class="num">¥${total.toLocaleString()}</td>
+      <td></td>
+      <td class="num">¥${total.toLocaleString()}</td>
+      <td colspan="3"></td>
+    </tr>`;
+
+  tbody.querySelectorAll('tr[data-project-id]').forEach(tr => {
+    tr.addEventListener('click', () => {
+      showSection('list');
+      setTimeout(() => openModal(tr.dataset.projectId), 50);
+    });
+  });
+}
+
+// 弥生フィルタ切り替え
+document.querySelectorAll('.yayoi-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.yayoi-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    yayoiFilter = chip.dataset.yfilter;
+    renderYayoi();
+  });
+});
+document.getElementById('yayoi-project-select').addEventListener('change', e => {
+  yayoiProject = e.target.value;
+  renderYayoi();
+});
+
+// 弥生CSV出力
+document.getElementById('btn-yayoi-csv').addEventListener('click', () => {
+  const rows = getYayoiRows();
+  const headers = ['伝票No.','日付','借方科目','税区分','借方金額','貸方科目','貸方金額','摘要','インボイス番号','案件名','帳合No.','申請者','状態'];
+  const csvRows = rows.map((r, i) => {
+    const it = r.item;
+    const p  = r.project;
+    return [
+      i + 1,
+      it.monthDay || '',
+      CATEGORY_TO_YAYOI[it.category] || it.category,
+      TAX_TO_YAYOI[it.tax] || it.tax,
+      it.amount || 0,
+      '未払金',
+      it.amount || 0,
+      it.description || '',
+      it.invoice || '',
+      p.projectName,
+      p.ledgerNo,
+      p.applicant,
+      statusLabel[p.status],
+    ];
+  });
+  const csv  = [headers, ...csvRows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const bom  = '﻿';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = '弥生仕訳データ.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
 // ===================== 初期描画 =====================
+initYayoiSelect();
 updateDashboard();
 renderTable();
 </script>

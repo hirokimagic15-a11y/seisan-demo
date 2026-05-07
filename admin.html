@@ -106,6 +106,8 @@ tbody tr:last-child td { border-bottom: none; }
 .status-pending  { background: #fef3c7; color: #92400e; }
 .status-approved { background: #d1fae5; color: #065f46; }
 .status-rejected { background: #fee2e2; color: #991b1b; }
+.status-yayoi    { background: #e0e7ff; color: #3730a3; }
+.new-badge { display:inline-block;margin-left:6px;padding:1px 6px;background:#ef4444;color:#fff;border-radius:8px;font-size:9px;font-weight:700;vertical-align:middle; }
 
 /* Modal */
 .modal-overlay {
@@ -250,6 +252,7 @@ tbody tr:last-child td { border-bottom: none; }
     <div class="nav-item">⚙️ 設定</div>
     <div class="nav-item" id="nav-to-yayoi" style="margin-top:16px;">📊 弥生会計へ</div>
     <div class="nav-item" id="nav-to-index">🔗 申請ページを開く</div>
+    <div class="nav-item" id="nav-reset" style="margin-top:auto;color:#f87171;font-size:12px;">🔄 データをリセット</div>
   </aside>
 
   <main class="main">
@@ -414,8 +417,21 @@ tbody tr:last-child td { border-bottom: none; }
 //   tax         : 税率（'10%' / '8%軽減' / '非課税'）
 //   invoice     : インボイス番号（例: 'T1234567890123'）または ''
 // ============================================================
-// ===================== データ =====================
-const dummyProjects = [
+// ===================== localStorage =====================
+const STORAGE_KEY = 'seisanData';
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { seeded: false, projects: [], lastYayoiAt: null };
+  } catch { return { seeded: false, projects: [], lastYayoiAt: null }; }
+}
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function getCurrentData() { return loadData(); }
+
+// ===================== シードデータ =====================
+const SEED_PROJECTS = [
   {
     id: 'EXP-2604-P01',
     projectName: 'ボートレース イメージ映像制作',
@@ -541,8 +557,21 @@ const dummyProjects = [
   }
 ];
 
-const statusLabel = { pending: '承認待ち', approved: '承認済み', rejected: '差し戻し' };
-const statusClass  = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
+// ===================== プロジェクト初期化 =====================
+function initProjects() {
+  const data = loadData();
+  if (!data.seeded) {
+    data.seeded = true;
+    const past = '2024-01-01T00:00:00.000Z';
+    data.projects = SEED_PROJECTS.map(p => ({ ...p, submittedAt: past }));
+    saveData(data);
+  }
+  return data.projects;
+}
+let projects = initProjects();
+
+const statusLabel = { pending: '承認待ち', approved: '承認済み', rejected: '差し戻し', yayoi_registered: '弥生登録済' };
+const statusClass  = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected', yayoi_registered: 'status-yayoi' };
 
 let currentFilter = 'すべて';
 let currentSearch  = '';
@@ -554,7 +583,7 @@ const CATEGORIES_ADMIN = ['会議費','旅費交通費①','旅費交通費②',
 // ===================== フィルタ =====================
 function getFiltered() {
   const q = currentSearch.trim().toLowerCase();
-  return dummyProjects.filter(p => {
+  return projects.filter(p => {
     const matchStatus = currentFilter === 'すべて' || statusLabel[p.status] === currentFilter;
     const matchSearch = !q || [p.projectName, p.ledgerNo, p.applicant].some(v => v.toLowerCase().includes(q));
     return matchStatus && matchSearch;
@@ -563,9 +592,10 @@ function getFiltered() {
 
 // ===================== ダッシュボード =====================
 function updateDashboard() {
-  const pending  = dummyProjects.filter(p => p.status === 'pending').length;
-  const approved = dummyProjects.filter(p => p.status === 'approved');
-  const allBudget = dummyProjects.reduce((s, p) => s + p.budget, 0);
+  projects = loadData().projects;
+  const pending  = projects.filter(p => p.status === 'pending').length;
+  const approved = projects.filter(p => p.status === 'approved');
+  const allBudget = projects.reduce((s, p) => s + p.budget, 0);
   const settledTotal = approved.reduce((s, p) => s + p.settled, 0);
   const rates = approved.map(p => Math.round(p.settled / p.budget * 100));
   const avgRate = rates.length ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length) : 0;
@@ -581,7 +611,13 @@ function updateDashboard() {
 }
 
 // ===================== テーブル描画 =====================
+function isNew(p) {
+  if (p.status !== 'pending' || !p.submittedAt) return false;
+  return (Date.now() - new Date(p.submittedAt).getTime()) < 30 * 60 * 1000;
+}
+
 function renderTable() {
+  projects = loadData().projects;
   const data  = getFiltered();
   const tbody = document.getElementById('rows');
   if (data.length === 0) {
@@ -591,17 +627,18 @@ function renderTable() {
   tbody.innerHTML = data.map(p => {
     const balance    = p.budget - p.settled;
     const balanceCls = balance < 0 ? ' balance-neg' : '';
-    const rate       = Math.round(p.settled / p.budget * 100);
+    const rate       = p.budget > 0 ? Math.round(p.settled / p.budget * 100) : 0;
+    const newBadge   = isNew(p) ? '<span class="new-badge">NEW</span>' : '';
     return `
     <tr data-id="${p.id}">
-      <td><strong>${p.projectName}</strong></td>
+      <td><strong>${p.projectName}</strong>${newBadge}</td>
       <td style="color:#6b7280;font-size:12px;">${p.ledgerNo}</td>
       <td>${p.applicant}</td>
       <td class="num">¥${p.budget.toLocaleString()}</td>
       <td class="num">¥${p.settled.toLocaleString()} <span style="font-size:10px;color:#6b7280;">(${rate}%)</span></td>
       <td class="num${balanceCls}">¥${balance.toLocaleString()}</td>
       <td style="color:#6b7280;">${p.date}</td>
-      <td><span class="status ${statusClass[p.status]}">${statusLabel[p.status]}</span></td>
+      <td><span class="status ${statusClass[p.status] || 'status-pending'}">${statusLabel[p.status] || p.status}</span></td>
     </tr>`;
   }).join('');
   tbody.querySelectorAll('tr').forEach(tr => {
@@ -612,7 +649,8 @@ function renderTable() {
 // ===================== モーダル =====================
 function openModal(id) {
   currentOpenId = id;
-  const p = dummyProjects.find(d => d.id === id);
+  projects = loadData().projects;
+  const p = projects.find(d => d.id === id);
   if (!p) return;
 
   document.getElementById('modal-title').textContent = p.projectName;
@@ -675,10 +713,11 @@ function openModal(id) {
 
   const approveBtn = document.getElementById('btn-approve');
   const rejectBtn  = document.getElementById('btn-reject');
-  approveBtn.disabled = p.status === 'approved';
-  rejectBtn.disabled  = p.status === 'rejected';
-  approveBtn.style.opacity = p.status === 'approved' ? '0.4' : '1';
-  rejectBtn.style.opacity  = p.status === 'rejected'  ? '0.4' : '1';
+  const locked = p.status === 'approved' || p.status === 'yayoi_registered';
+  approveBtn.disabled = locked;
+  rejectBtn.disabled  = p.status === 'rejected' || p.status === 'yayoi_registered';
+  approveBtn.style.opacity = locked ? '0.4' : '1';
+  rejectBtn.style.opacity  = (p.status === 'rejected' || p.status === 'yayoi_registered') ? '0.4' : '1';
 
   document.getElementById('modal').classList.add('show');
 }
@@ -689,7 +728,7 @@ function closeModal() {
 }
 
 function openItemModal(projectId, itemIdx) {
-  const p  = dummyProjects.find(d => d.id === projectId);
+  const p  = projects.find(d => d.id === projectId);
   const it = p.items[itemIdx];
   currentItemIdx = itemIdx;
 
@@ -729,7 +768,9 @@ function closeItemModal() {
 }
 
 function saveItemModal() {
-  const p  = dummyProjects.find(d => d.id === currentOpenId);
+  const data = loadData();
+  projects = data.projects;
+  const p  = projects.find(d => d.id === currentOpenId);
   const it = p.items[currentItemIdx];
   it.monthDay    = document.getElementById('edit-monthDay').value;
   it.receiptNo   = document.getElementById('edit-receiptNo').value;
@@ -738,21 +779,30 @@ function saveItemModal() {
   it.amount      = parseFloat(document.getElementById('edit-amount').value) || 0;
   it.tax         = document.getElementById('edit-tax').value;
   it.invoice     = document.getElementById('edit-invoice').value;
+  p.settled = p.items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  p.advance = p.budget - p.settled;
+  saveData(data);
   closeItemModal();
   openModal(currentOpenId);
 }
 
 function approveItem() {
-  const p = dummyProjects.find(d => d.id === currentOpenId);
+  const data = loadData();
+  projects = data.projects;
+  const p = projects.find(d => d.id === currentOpenId);
   if (p) p.status = 'approved';
+  saveData(data);
   closeModal();
   updateDashboard();
   renderTable();
 }
 
 function rejectItem() {
-  const p = dummyProjects.find(d => d.id === currentOpenId);
+  const data = loadData();
+  projects = data.projects;
+  const p = projects.find(d => d.id === currentOpenId);
   if (p) p.status = 'rejected';
+  saveData(data);
   closeModal();
   updateDashboard();
   renderTable();
@@ -762,7 +812,7 @@ function rejectItem() {
 document.getElementById('btn-csv').addEventListener('click', () => {
   const headers = ['案件名', '帳合No.', '申請者', '提出日', '予算額', '精算額', '残高', '科目グループ', '摘要', '金額', '税率', 'インボイス番号', '状態'];
   const rows = [];
-  dummyProjects.forEach(p => {
+  projects.forEach(p => {
     const balance = p.budget - p.settled;
     if (p.items.length === 0) {
       rows.push([p.projectName, p.ledgerNo, p.applicant, p.date, p.budget, p.settled, balance, '', '', '', '', '', statusLabel[p.status]]);
@@ -810,6 +860,13 @@ document.querySelectorAll('.filter-chip').forEach(chip => {
 
 document.getElementById('nav-to-index').addEventListener('click', () => { window.location.href = 'index.html'; });
 document.getElementById('nav-to-yayoi').addEventListener('click', () => { window.open('yayoi.html', '_blank'); });
+document.getElementById('nav-reset').addEventListener('click', () => {
+  if (!confirm('デモデータをシードに戻しますか？\n（申請・承認・弥生登録の履歴がすべてリセットされます）')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  projects = initProjects();
+  updateDashboard();
+  renderTable();
+});
 
 // ===================== 初期描画 =====================
 updateDashboard();

@@ -322,7 +322,8 @@ footer {
         <h2>申請を受け付けました</h2>
         <p>管理担当者に通知しました。<br>承認結果はメールでお知らせします。</p>
         <div class="complete-detail" id="complete-detail"></div>
-        <button class="btn btn-primary" id="btn-new">新しい精算書を作成する</button>
+        <a href="admin.html" class="btn btn-primary" style="display:block;text-align:center;text-decoration:none;margin-bottom:12px;">管理画面で確認する →</a>
+        <button class="btn btn-secondary" id="btn-new">新しい精算書を作成する</button>
       </div>
     </div>
   </main>
@@ -559,9 +560,41 @@ document.getElementById('btn-to-step3').addEventListener('click', () => {
 document.getElementById('btn-back1').addEventListener('click', () => setStep(1));
 document.getElementById('btn-back2').addEventListener('click', () => { updateTotalBar(); setStep(2); });
 
+// ===================== localStorage =====================
+const STORAGE_KEY = 'seisanData';
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { seeded: false, projects: [], lastYayoiAt: null };
+  } catch { return { seeded: false, projects: [], lastYayoiAt: null }; }
+}
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
 document.getElementById('btn-submit').addEventListener('click', () => {
-  const refNo  = projectData.ledger + '-' + Date.now().toString().slice(-4);
-  const total  = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const total   = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const advance = (projectData.budget || 0) - total;
+  const newProject = {
+    id: 'EXP-' + Date.now(),
+    projectName: projectData.name,
+    ledgerNo: projectData.ledger,
+    applicant: projectData.applicant,
+    date: projectData.date,
+    purpose: projectData.purpose || '',
+    dept: '制作課',
+    budget: projectData.budget || 0,
+    settled: total,
+    advance: advance,
+    status: 'pending',
+    submittedAt: new Date().toISOString(),
+    items: items.map(({ id, ...rest }) => rest),
+  };
+  const data = loadData();
+  data.projects.push(newProject);
+  saveData(data);
+
+  const refNo = projectData.ledger + '-' + Date.now().toString().slice(-4);
   document.getElementById('complete-detail').innerHTML = `
     <div class="complete-row"><span class="label">受付番号</span><span class="value">${refNo}</span></div>
     <div class="complete-row"><span class="label">案件名</span><span class="value">${projectData.name}</span></div>
@@ -569,7 +602,7 @@ document.getElementById('btn-submit').addEventListener('click', () => {
     <div class="complete-row"><span class="label">申請者</span><span class="value">${projectData.applicant}</span></div>
     <div class="complete-row"><span class="label">明細件数</span><span class="value">${items.length}件</span></div>
     <div class="complete-row"><span class="label">精算合計</span><span class="value">¥${total.toLocaleString()}</span></div>
-    <div class="complete-row"><span class="label">予算残高</span><span class="value">¥${(projectData.budget - total).toLocaleString()}</span></div>
+    <div class="complete-row"><span class="label">予算残高</span><span class="value">¥${advance.toLocaleString()}</span></div>
   `;
   setStep(4);
 });

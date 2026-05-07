@@ -191,6 +191,66 @@ body {
 }
 .statusbar .sb-sep { width: 1px; height: 14px; background: #808080; }
 
+/* ===== 確認モーダル ===== */
+.confirm-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;
+}
+.confirm-overlay.show { display: flex; }
+.confirm-modal {
+  background: #d4d0c8; border: 2px solid #000;
+  border-top-color: #fff; border-left-color: #fff;
+  width: 560px; max-height: 80vh; display: flex; flex-direction: column;
+  font-family: "MS UI Gothic","Meiryo",sans-serif; font-size: 12px;
+}
+.confirm-modal-titlebar {
+  background: linear-gradient(180deg, #0059b0 0%, #003c8c 100%);
+  color: #fff; padding: 3px 8px; font-size: 11px; font-weight: 700;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.confirm-modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+.confirm-modal-body p { margin-bottom: 10px; font-size: 12px; }
+.confirm-summary-table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+  font-family: "MS Gothic","Courier New",monospace; margin-bottom: 12px;
+}
+.confirm-summary-table th {
+  background: #336699; color: #fff; padding: 3px 6px;
+  border: 1px solid #4a7aaa; text-align: center; font-size: 10px;
+}
+.confirm-summary-table td {
+  padding: 2px 6px; border: 1px solid #c8c8c8; background: #fff;
+}
+.confirm-summary-table td.num { text-align: right; color: #003366; }
+.confirm-tax-summary {
+  background: #f0f0f0; border: 1px inset #ccc;
+  padding: 8px 10px; font-size: 11px; line-height: 1.8;
+}
+.confirm-modal-footer {
+  padding: 10px 16px; display: flex; justify-content: flex-end; gap: 8px;
+  border-top: 1px solid #808080; background: #d4d0c8;
+}
+.win-btn {
+  padding: 4px 16px; background: #d4d0c8; font-size: 12px; font-family: inherit;
+  border: 1px solid #fff; border-bottom-color: #808080; border-right-color: #808080;
+  cursor: pointer; min-width: 80px;
+}
+.win-btn:active {
+  border-top-color: #808080; border-left-color: #808080;
+  border-bottom-color: #fff; border-right-color: #fff;
+}
+.win-btn.primary { background: #0059b0; color: #fff; font-weight: 700; }
+.win-btn.primary:active { background: #003c8c; }
+
+/* ===== 成功通知バー ===== */
+.success-bar {
+  display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+  background: #006600; color: #fff; padding: 8px 16px;
+  font-size: 12px; font-weight: 700; text-align: center;
+  border-bottom: 2px solid #004400;
+}
+.success-bar.show { display: block; }
+
 /* ===== 印刷 ===== */
 @media print {
   .titlebar, .menubar, .toolbar, .sidebar, .filter-bar, .statusbar { display: none; }
@@ -239,6 +299,10 @@ body {
   <div class="tool-group">
     <button class="tool-btn primary" id="btn-csv-export">📥 CSV出力</button>
     <button class="tool-btn" onclick="window.print()">🖨 印刷</button>
+  </div>
+  <div class="tool-sep"></div>
+  <div class="tool-group">
+    <button class="tool-btn" id="btn-register-yayoi" style="background:#006600;color:#fff;border-color:#004400;font-weight:700;">✓ 弥生会計に反映する</button>
   </div>
   <div class="tool-sep"></div>
   <div class="tool-group">
@@ -339,10 +403,24 @@ body {
 
 <script>
 // ============================================================
-// ★ データを入れる場所はここです ★
-// admin.html と同じ dummyProjects を使います。
+// localStorage ユーティリティ
 // ============================================================
-const dummyProjects = [
+const STORAGE_KEY = 'seisanData';
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { seeded: false, projects: [], lastYayoiAt: null };
+  } catch { return { seeded: false, projects: [], lastYayoiAt: null }; }
+}
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ============================================================
+// （削除：ハードコードデータ不要 — admin.html のシードから読む）
+// ============================================================
+// yayoi.html では approved / yayoi_registered のみを表示する
+const DUMMY_REMOVED = [
   {
     id: 'EXP-2604-P01',
     projectName: 'ボートレース イメージ映像制作',
@@ -448,6 +526,7 @@ const dummyProjects = [
     ]
   }
 ];
+// ↑ DUMMY_REMOVED は使用しない（参照禁止）
 
 // ============================================================
 // 科目マッピング（精算書 → 弥生科目）
@@ -473,7 +552,7 @@ const TAX_MAP = {
 };
 
 // ステータスラベル
-const STATUS_LABEL = { pending: '承認待ち', approved: '承認済み', rejected: '差し戻し' };
+const STATUS_LABEL = { pending: '承認待ち', approved: '承認済み', rejected: '差し戻し', yayoi_registered: '弥生登録済' };
 
 // ============================================================
 // 状態
@@ -565,12 +644,10 @@ function setGroupView(v) {
 }
 
 function getFilteredProjects() {
-  let ps = dummyProjects;
+  let ps = loadData().projects.filter(p => p.status === 'approved' || p.status === 'yayoi_registered');
   if (currentFilter === 'approved') ps = ps.filter(p => p.status === 'approved');
   const dept = document.getElementById('dept-select').value;
   if (dept !== 'all') ps = ps.filter(p => p.dept === dept);
-  const period = document.getElementById('period-select').value;
-  // period filter is informational for demo
   return ps;
 }
 
@@ -657,10 +734,10 @@ function renderLedger() {
 
   rows.forEach((r, i) => {
     balance -= r.total;
-    const statusBadge = r.project.status === 'approved'
+    const statusBadge = r.project.status === 'yayoi_registered'
+      ? `<span style="color:#3730a3;font-weight:700;">登録済</span>`
+      : r.project.status === 'approved'
       ? `<span style="color:#006600;font-weight:700;">承認</span>`
-      : r.project.status === 'pending'
-      ? `<span style="color:#cc6600;">待機</span>`
       : `<span style="color:#cc0000;">差戻</span>`;
 
     const invClass = r.invoice === '適格' ? 'tekikaku' : 'kubun';
@@ -745,10 +822,92 @@ document.getElementById('btn-csv-export').addEventListener('click', () => {
 });
 
 // ============================================================
+// 確認モーダル
+// ============================================================
+function showConfirmModal() {
+  const approvedProjects = loadData().projects.filter(p => p.status === 'approved');
+  if (approvedProjects.length === 0) {
+    alert('弥生会計に反映する承認済み案件がありません。\n管理画面で案件を承認してください。');
+    return;
+  }
+  const rows = aggregateItems(approvedProjects);
+  const totalExpense = rows.reduce((s, r) => s + r.total, 0);
+  const tax10  = rows.filter(r => r.tax === '10%').reduce((s, r) => s + r.taxAmt, 0);
+  const tax8   = rows.filter(r => r.tax === '8%軽減').reduce((s, r) => s + r.taxAmt, 0);
+
+  const tableHtml = rows.map((r, i) => `
+    <tr>
+      <td style="text-align:center;">${i+1}</td>
+      <td>${r.yayoiSubj}</td>
+      <td class="num">¥${r.total.toLocaleString()}</td>
+      <td class="num" style="font-size:10px;">¥${r.taxAmt.toLocaleString()}</td>
+      <td style="font-size:10px;">${r.taxKubun}</td>
+      <td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${r.summary}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('confirm-modal-content').innerHTML = `
+    <p>以下の <strong>${approvedProjects.length}件</strong> の案件（<strong>${rows.length}行</strong>）を弥生会計（現金出納帳）に反映します。</p>
+    <table class="confirm-summary-table">
+      <thead><tr>
+        <th style="width:32px;">No.</th><th>科目</th>
+        <th style="width:80px;">支出金額</th><th style="width:68px;">貸方税額</th>
+        <th style="width:110px;">税区分</th><th>摘要</th>
+      </tr></thead>
+      <tbody>${tableHtml}</tbody>
+    </table>
+    <div class="confirm-tax-summary">
+      合計支出金額：<strong>¥${totalExpense.toLocaleString()}</strong><br>
+      うち消費税10%：¥${tax10.toLocaleString()}　／　うち消費税8%軽減：¥${tax8.toLocaleString()}
+    </div>
+  `;
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-overlay').classList.remove('show');
+}
+
+function registerToYayoi() {
+  const data = loadData();
+  const targets = data.projects.filter(p => p.status === 'approved');
+  targets.forEach(p => { p.status = 'yayoi_registered'; });
+  data.lastYayoiAt = new Date().toISOString();
+  saveData(data);
+  closeConfirmModal();
+  const bar = document.getElementById('success-bar');
+  bar.textContent = `${targets.length}件を弥生会計（現金出納帳）に反映しました（${new Date().toLocaleString('ja-JP')}）`;
+  bar.classList.add('show');
+  setTimeout(() => bar.classList.remove('show'), 5000);
+  renderLedger();
+}
+
+document.getElementById('btn-register-yayoi').addEventListener('click', showConfirmModal);
+
+// ============================================================
 // 初期描画
 // ============================================================
 setFilter('all');
 renderLedger();
 </script>
+
+<!-- 成功通知バー -->
+<div class="success-bar" id="success-bar"></div>
+
+<!-- 確認モーダル -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <div class="confirm-modal-titlebar">
+      <span>弥生会計への入力確認</span>
+      <button class="titlebar-btn" onclick="closeConfirmModal()">✕</button>
+    </div>
+    <div class="confirm-modal-body" id="confirm-modal-content"></div>
+    <div class="confirm-modal-footer">
+      <button class="win-btn" onclick="closeConfirmModal()">キャンセル</button>
+      <button class="win-btn primary" onclick="registerToYayoi()">✓ 弥生会計に反映する</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

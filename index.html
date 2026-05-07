@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>経費精算 - 申請</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  background: #f5f6f8; color: #1a1a1a; line-height: 1.6; min-height: 100vh;
+}
+.container { max-width: 800px; margin: 0 auto; min-height: 100vh; background: #fff; }
+header {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: #fff; padding: 24px 20px 28px; position: relative;
+}
+header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.02em; }
+header .subtitle { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+.demo-badge {
+  position: absolute; top: 16px; right: 16px;
+  background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.4);
+  color: #fff; font-size: 10px; padding: 4px 10px;
+  border-radius: 12px; letter-spacing: 0.05em;
+}
+main { padding: 24px 20px 80px; }
+
+/* ステップ表示 */
+.step-indicator { display: flex; justify-content: space-between; margin-bottom: 28px; position: relative; }
+.step-indicator::before {
+  content: ""; position: absolute; top: 14px; left: 14px; right: 14px;
+  height: 2px; background: #e2e5ea; z-index: 0;
+}
+.step { position: relative; z-index: 1; text-align: center; flex: 1; }
+.step-circle {
+  width: 28px; height: 28px; border-radius: 50%; background: #e2e5ea; color: #8a8f99;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 6px; font-size: 12px; font-weight: 600; transition: all 0.3s;
+}
+.step.active .step-circle { background: #2563eb; color: #fff; }
+.step.done .step-circle { background: #10b981; color: #fff; }
+.step-label { font-size: 11px; color: #6b7280; }
+.step.active .step-label { color: #2563eb; font-weight: 600; }
+
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+h2 { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+.lead { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
+
+/* フォーム共通 */
+.form-section { background: #fff; border: 1px solid #e2e5ea; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.form-section-title { font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field-label { font-size: 11px; color: #6b7280; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 4px; }
+.field-label::after { content: " *"; color: #dc2626; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid #d1d5db;
+  border-radius: 8px; font-size: 14px; font-family: inherit; color: #1a1a1a; background: #fff;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* 明細テーブル */
+.items-section { margin-bottom: 16px; }
+.items-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.items-title { font-size: 14px; font-weight: 700; }
+.add-btn {
+  padding: 6px 12px; background: #eff6ff; color: #2563eb;
+  border: 1px solid #bfdbfe; border-radius: 8px; font-size: 12px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.add-btn:hover { background: #dbeafe; }
+
+.item-row {
+  background: #fff; border: 1px solid #e2e5ea; border-radius: 10px;
+  padding: 12px; margin-bottom: 8px; position: relative;
+}
+.item-row-head { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.item-no { font-size: 11px; font-weight: 700; color: #94a3b8; min-width: 24px; }
+.item-category { flex: 1; }
+.item-category select {
+  width: 100%; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 7px;
+  font-size: 12px; font-family: inherit; background: #fff;
+}
+.item-delete {
+  background: none; border: none; cursor: pointer;
+  color: #94a3b8; font-size: 18px; padding: 0 4px; line-height: 1;
+}
+.item-delete:hover { color: #dc2626; }
+.item-row-body { display: flex; flex-direction: column; gap: 8px; }
+.item-desc textarea { font-size: 13px; width: 100%; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 7px; font-family: inherit; resize: vertical; min-height: 60px; line-height: 1.5; }
+.item-amount-row { display: flex; gap: 8px; align-items: center; }
+.item-amount input {
+  width: 160px; padding: 7px 10px; border: 1px solid #d1d5db;
+  border-radius: 7px; font-size: 13px; font-family: inherit; text-align: right;
+}
+.item-tax select {
+  width: 130px; padding: 7px 8px; border: 1px solid #d1d5db;
+  border-radius: 7px; font-size: 12px; font-family: inherit;
+}
+.item-row-date { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+.item-date-field { display: flex; align-items: center; gap: 5px; }
+.item-date-field label { font-size: 11px; color: #6b7280; font-weight: 600; white-space: nowrap; }
+.item-date-field input { width: 72px; padding: 5px 8px; border: 1px solid #d1d5db; border-radius: 7px; font-size: 12px; font-family: inherit; text-align: center; }
+.item-no-field input { width: 52px; }
+.item-row-foot { margin-top: 8px; }
+.item-invoice input {
+  width: 100%; padding: 7px 10px; border: 1px solid #d1d5db;
+  border-radius: 7px; font-size: 12px; font-family: inherit;
+}
+
+/* AI読取ゾーン */
+.ocr-zone {
+  border: 2px dashed #bfdbfe; border-radius: 12px; padding: 16px 16px 14px;
+  background: #f0f7ff; margin-bottom: 12px; text-align: center;
+}
+.ocr-zone p { font-size: 13px; color: #1e40af; font-weight: 600; margin-bottom: 4px; }
+.ocr-zone .hint { font-size: 11px; color: #60a5fa; }
+.ocr-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; background: #2563eb; color: #fff;
+  border: none; border-radius: 9px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; margin-top: 10px;
+}
+.ocr-btn:hover { background: #1e40af; }
+input[type="file"] { display: none; }
+
+/* 処理中 */
+.processing-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15,23,42,0.45); z-index: 200; align-items: center; justify-content: center;
+}
+.processing-overlay.show { display: flex; }
+.processing-box {
+  background: #fff; border-radius: 16px; padding: 32px 28px; text-align: center;
+  max-width: 300px; width: 90%; animation: slideUp 0.2s;
+}
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.spinner {
+  width: 48px; height: 48px; border: 3px solid #e2e5ea; border-top-color: #2563eb;
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.processing-status { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.processing-detail { font-size: 12px; color: #6b7280; }
+
+/* 合計バー */
+.total-bar {
+  background: #f8fafc; border: 1px solid #e2e5ea; border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 16px;
+}
+.total-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.total-row.main { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.total-row.main .val { color: #2563eb; }
+.balance-bar { height: 6px; background: #e2e5ea; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.balance-fill { height: 100%; border-radius: 3px; background: #2563eb; transition: width 0.4s; }
+.balance-fill.over { background: #dc2626; }
+.balance-neg { color: #dc2626; }
+
+/* ボタン */
+.btn {
+  width: 100%; padding: 14px 20px; border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; font-family: inherit; margin-top: 4px;
+}
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:hover { background: #1e40af; }
+.btn-secondary { background: #f1f5f9; color: #475569; }
+.btn-secondary:hover { background: #e2e8f0; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 確認画面 */
+.confirm-section { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.confirm-title { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+.confirm-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #e2e5ea; }
+.confirm-row:last-child { border-bottom: none; }
+.confirm-row .label { color: #6b7280; }
+.confirm-row .value { font-weight: 600; }
+.confirm-items { margin-top: 10px; }
+.confirm-item { padding: 8px 0; border-bottom: 1px solid #e2e5ea; font-size: 13px; }
+.confirm-item:last-child { border-bottom: none; }
+.confirm-item-head { display: flex; justify-content: space-between; }
+.confirm-item-cat { font-size: 10px; color: #2563eb; font-weight: 600; background: #eff6ff; padding: 2px 8px; border-radius: 6px; }
+.confirm-item-desc { color: #475569; font-size: 12px; margin-top: 2px; }
+
+/* 完了 */
+.complete-screen { text-align: center; padding: 40px 20px; }
+.complete-icon {
+  width: 80px; height: 80px; background: #d1fae5; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px; margin: 0 auto 20px;
+}
+.complete-screen h2 { color: #10b981; margin-bottom: 12px; }
+.complete-screen p { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+.complete-detail { background: #f8fafc; border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 24px; }
+.complete-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+.complete-row .label { color: #6b7280; }
+.complete-row .value { font-weight: 600; }
+
+footer {
+  text-align: center; padding: 16px; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e5ea;
+}
+.footer-link { color: #2563eb; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <span class="demo-badge">DEMO v0.2</span>
+    <h1>経費精算アプリ</h1>
+    <p class="subtitle">案件ごとに精算書をまとめて提出</p>
+  </header>
+
+  <main>
+    <div class="step-indicator">
+      <div class="step active" data-step="1"><div class="step-circle">1</div><div class="step-label">案件情報</div></div>
+      <div class="step" data-step="2"><div class="step-circle">2</div><div class="step-label">経費入力</div></div>
+      <div class="step" data-step="3"><div class="step-circle">3</div><div class="step-label">確認</div></div>
+      <div class="step" data-step="4"><div class="step-circle">4</div><div class="step-label">完了</div></div>
+    </div>
+
+    <!-- Step1: 案件情報 -->
+    <div class="screen active" id="screen-step1">
+      <h2>案件情報を入力</h2>
+      <p class="lead">この精算書が紐づく案件の基本情報を入力してください。</p>
+      <div class="form-section">
+        <div class="form-section-title">案件基本情報</div>
+        <div class="field">
+          <div class="field-label field-label">案件名</div>
+          <input type="text" id="p-name" placeholder="例：〇〇CM 撮影" autocomplete="off">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label field-label">帳合 No.</div>
+            <input type="text" id="p-ledger" placeholder="例：25po5278-001">
+          </div>
+          <div class="field">
+            <div class="field-label field-label">提出日</div>
+            <input type="date" id="p-date" value="">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="field-label field-label">申請者</div>
+            <input type="text" id="p-applicant" placeholder="氏名">
+          </div>
+          <div class="field">
+            <div class="field-label field-label">予算額（円）</div>
+            <input type="number" id="p-budget" placeholder="0" min="0">
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">目的</div>
+          <input type="text" id="p-purpose" placeholder="例：撮影・編集">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-to-step2">次へ：経費入力 →</button>
+    </div>
+
+    <!-- Step2: 経費入力 -->
+    <div class="screen" id="screen-step2">
+      <h2>経費を入力</h2>
+      <p class="lead">領収書を読み取るか、手動で経費を追加してください。</p>
+
+      <div class="ocr-zone">
+        <p>📷 領収書を読み取って自動入力</p>
+        <div class="hint">写真を選ぶとAIが科目・金額を読み取ります</div>
+        <label class="ocr-btn" for="ocr-file-input">
+          領収書を追加
+        </label>
+        <input type="file" id="ocr-file-input" accept="image/*" capture="environment">
+      </div>
+
+      <div class="items-section">
+        <div class="items-header">
+          <span class="items-title">明細一覧</span>
+          <button class="add-btn" id="btn-add-manual">＋ 手動で追加</button>
+        </div>
+        <div id="items-container">
+          <!-- 初期行がJSで挿入される -->
+        </div>
+      </div>
+
+      <div class="total-bar" id="total-bar">
+        <div class="total-row main">
+          <span>合計金額</span>
+          <span class="val" id="total-amount">¥0</span>
+        </div>
+        <div class="total-row">
+          <span>予算額</span>
+          <span id="total-budget">¥0</span>
+        </div>
+        <div class="total-row">
+          <span>予算残高</span>
+          <span id="total-balance">¥0</span>
+        </div>
+        <div class="balance-bar"><div class="balance-fill" id="balance-fill" style="width:0%"></div></div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-to-step3">内容確認へ →</button>
+      <button class="btn btn-secondary" id="btn-back1" style="margin-top:8px;">← 案件情報に戻る</button>
+    </div>
+
+    <!-- Step3: 確認 -->
+    <div class="screen" id="screen-step3">
+      <h2>内容を確認</h2>
+      <p class="lead">送信前に内容をご確認ください。</p>
+      <div id="confirm-body"></div>
+      <button class="btn btn-primary" id="btn-submit">この内容で申請する</button>
+      <button class="btn btn-secondary" id="btn-back2" style="margin-top:8px;">← 経費入力に戻る</button>
+    </div>
+
+    <!-- Step4: 完了 -->
+    <div class="screen" id="screen-step4">
+      <div class="complete-screen">
+        <div class="complete-icon">✓</div>
+        <h2>申請を受け付けました</h2>
+        <p>管理担当者に通知しました。<br>承認結果はメールでお知らせします。</p>
+        <div class="complete-detail" id="complete-detail"></div>
+        <button class="btn btn-primary" id="btn-new">新しい精算書を作成する</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    DEMO v0.2 ・ <a href="admin.html" class="footer-link">管理画面へ</a>
+  </footer>
+</div>
+
+<!-- AI処理中オーバーレイ -->
+<div class="processing-overlay" id="processing-overlay">
+  <div class="processing-box">
+    <div class="spinner"></div>
+    <div class="processing-status" id="proc-status">画像を解析中...</div>
+    <div class="processing-detail" id="proc-detail">領収書の文字を読み取っています</div>
+  </div>
+</div>
+
+<script>
+// ===================== 科目グループ定義 =====================
+const CATEGORIES = [
+  '会議費',
+  '旅費交通費①',
+  '旅費交通費②',
+  '車両費',
+  '制作諸経費',
+  '通信費',
+  '郵便・宅急便代',
+  'その他',
+];
+const TAX_OPTIONS = ['10%', '8%軽減', '非課税'];
+
+// ===================== OCRプリセット =====================
+const ocrPresets = [
+  { category: '会議費',      description: 'ロケハン 昼食代（水野・藤原・林・白銀）計4名',          monthDay: '10/21', receiptNo: 1,  amount: 4236,  tax: '10%',   invoice: 'T1234567890101' },
+  { category: '会議費',      description: '撮影 朝食代 計35名',                               monthDay: '10/31', receiptNo: 7,  amount: 20790, tax: '8%軽減', invoice: 'T1234567890107' },
+  { category: '旅費交通費①', description: 'ロケハン 駐車場代（撮影車両）',                      monthDay: '10/21', receiptNo: 18, amount: 550,   tax: '10%',   invoice: 'T1234567890118' },
+  { category: '旅費交通費①', description: '撮影 タクシー代（阿倍野→中津 林 早朝出発の為）計1名', monthDay: '10/31', receiptNo: 19, amount: 4600,  tax: '10%',   invoice: 'T1234567890123' },
+  { category: '旅費交通費②', description: '撮影 宿泊代（水野・藤原・林・白銀）計4名',           monthDay: '10/30', receiptNo: 24, amount: 24885, tax: '10%',   invoice: 'T1234567890130' },
+  { category: '車両費',      description: 'ロケハン 軽油代（撮影車両用）',                      monthDay: '10/21', receiptNo: 27, amount: 2199,  tax: '10%',   invoice: 'T1234567890133' },
+  { category: '制作諸経費',  description: '撮影用ケータリング代',                               monthDay: '11/30', receiptNo: 36, amount: 8695,  tax: '8%軽減', invoice: 'T1234567890142' },
+  { category: '制作諸経費',  description: '撮影用備品代（タオル・突っ張り棒・カラーマグネット）', monthDay: '10/30', receiptNo: 34, amount: 11744, tax: '10%',   invoice: 'T1234567890140' },
+];
+
+const processingMessages = [
+  { status: '画像を解析中...', detail: '領収書の輪郭を検出しています' },
+  { status: 'AI読取中...', detail: '金額・取引先を抽出しています' },
+  { status: '科目を推定中...', detail: '取引内容から最適な科目を判定' },
+  { status: 'インボイス確認中...', detail: '登録番号と税率を照合' },
+];
+
+// ===================== 状態管理 =====================
+let items = [];
+let nextId = 1;
+let projectData = {};
+
+function getToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+document.getElementById('p-date').value = getToday();
+
+// ===================== ステップ制御 =====================
+const steps   = document.querySelectorAll('.step');
+const screens = {
+  step1: document.getElementById('screen-step1'),
+  step2: document.getElementById('screen-step2'),
+  step3: document.getElementById('screen-step3'),
+  step4: document.getElementById('screen-step4'),
+};
+
+function setStep(n) {
+  steps.forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i + 1 < n) s.classList.add('done');
+    if (i + 1 === n) s.classList.add('active');
+  });
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[`step${n}`].classList.add('active');
+}
+
+// ===================== 明細行 =====================
+function categoryOptions(selected) {
+  return CATEGORIES.map(c =>
+    `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`
+  ).join('');
+}
+function taxOptions(selected) {
+  return TAX_OPTIONS.map(t =>
+    `<option value="${t}" ${t === selected ? 'selected' : ''}>${t}</option>`
+  ).join('');
+}
+
+function addItemRow(preset = null) {
+  const id  = nextId++;
+  const row = {
+    id,
+    monthDay:    preset ? (preset.monthDay  ?? '') : '',
+    receiptNo:   preset ? (preset.receiptNo ?? '') : '',
+    category:    preset ? preset.category    : CATEGORIES[0],
+    description: preset ? preset.description : '',
+    amount:      preset ? preset.amount      : '',
+    tax:         preset ? preset.tax         : '10%',
+    invoice:     preset ? preset.invoice     : '',
+  };
+  items.push(row);
+
+  const el = document.createElement('div');
+  el.className = 'item-row';
+  el.dataset.id = id;
+  el.innerHTML = `
+    <div class="item-row-head">
+      <span class="item-no">#${id}</span>
+      <div class="item-category">
+        <select onchange="updateItem(${id},'category',this.value)">
+          ${categoryOptions(row.category)}
+        </select>
+      </div>
+      <button class="item-delete" onclick="deleteItem(${id})">✕</button>
+    </div>
+    <div class="item-row-date">
+      <div class="item-date-field">
+        <label>月日</label>
+        <input type="text" placeholder="10/21" value="${row.monthDay}"
+          oninput="updateItem(${id},'monthDay',this.value)">
+      </div>
+      <div class="item-date-field item-no-field">
+        <label>レシートNo.</label>
+        <input type="text" placeholder="1" value="${row.receiptNo}"
+          oninput="updateItem(${id},'receiptNo',this.value)">
+      </div>
+    </div>
+    <div class="item-row-body">
+      <div class="item-desc">
+        <textarea placeholder="摘要（具体的な内容）"
+          oninput="updateItem(${id},'description',this.value)">${row.description}</textarea>
+      </div>
+      <div class="item-amount-row">
+        <div class="item-amount">
+          <input type="number" placeholder="金額" value="${row.amount}" min="0"
+            oninput="updateItem(${id},'amount',this.value)">
+        </div>
+        <div class="item-tax">
+          <select onchange="updateItem(${id},'tax',this.value)">
+            ${taxOptions(row.tax)}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="item-row-foot">
+      <input type="text" placeholder="インボイス登録番号（T＋13桁）または空白" value="${row.invoice}"
+        oninput="updateItem(${id},'invoice',this.value)" class="item-invoice" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:12px;font-family:inherit;">
+    </div>
+  `;
+  document.getElementById('items-container').appendChild(el);
+  updateTotalBar();
+}
+
+function updateItem(id, key, value) {
+  const item = items.find(i => i.id === id);
+  if (item) item[key] = key === 'amount' ? (parseFloat(value) || 0) : value;
+  updateTotalBar();
+}
+
+function deleteItem(id) {
+  items = items.filter(i => i.id !== id);
+  const el = document.querySelector(`.item-row[data-id="${id}"]`);
+  if (el) el.remove();
+  updateTotalBar();
+}
+
+function updateTotalBar() {
+  const total  = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const budget = parseFloat(document.getElementById('p-budget').value) || 0;
+  const bal    = budget - total;
+  const rate   = budget > 0 ? Math.min(Math.round(total / budget * 100), 100) : 0;
+  const over   = bal < 0;
+
+  document.getElementById('total-amount').textContent = `¥${total.toLocaleString()}`;
+  document.getElementById('total-budget').textContent  = `¥${budget.toLocaleString()}`;
+  document.getElementById('total-balance').textContent = `¥${bal.toLocaleString()}`;
+  document.getElementById('total-balance').className   = over ? 'balance-neg' : '';
+
+  const fill = document.getElementById('balance-fill');
+  fill.style.width = rate + '%';
+  fill.className   = 'balance-fill' + (over ? ' over' : '');
+}
+
+// ===================== AI読取 =====================
+document.getElementById('ocr-file-input').addEventListener('change', e => {
+  if (!e.target.files[0]) return;
+  const preset = ocrPresets[Math.floor(Math.random() * ocrPresets.length)];
+  const overlay = document.getElementById('processing-overlay');
+  overlay.classList.add('show');
+  const statusEl = document.getElementById('proc-status');
+  const detailEl = document.getElementById('proc-detail');
+
+  function step(idx) {
+    if (idx >= processingMessages.length) {
+      overlay.classList.remove('show');
+      addItemRow(preset);
+      e.target.value = '';
+      return;
+    }
+    statusEl.textContent = processingMessages[idx].status;
+    detailEl.textContent = processingMessages[idx].detail;
+    setTimeout(() => step(idx + 1), 780 + Math.random() * 320);
+  }
+  step(0);
+});
+
+// ===================== ナビゲーション =====================
+document.getElementById('btn-to-step2').addEventListener('click', () => {
+  const name     = document.getElementById('p-name').value.trim();
+  const ledger   = document.getElementById('p-ledger').value.trim();
+  const applicant = document.getElementById('p-applicant').value.trim();
+  const budget   = document.getElementById('p-budget').value;
+  projectData = {
+    name, ledger, date: document.getElementById('p-date').value,
+    applicant, budget: parseFloat(budget), purpose: document.getElementById('p-purpose').value,
+  };
+  if (items.length === 0) addItemRow();
+  updateTotalBar();
+  setStep(2);
+});
+
+document.getElementById('btn-add-manual').addEventListener('click', () => addItemRow());
+
+document.getElementById('btn-to-step3').addEventListener('click', () => {
+  if (items.length === 0) { alert('経費を1件以上入力してください。'); return; }
+  buildConfirm();
+  setStep(3);
+});
+
+document.getElementById('btn-back1').addEventListener('click', () => setStep(1));
+document.getElementById('btn-back2').addEventListener('click', () => { updateTotalBar(); setStep(2); });
+
+document.getElementById('btn-submit').addEventListener('click', () => {
+  const refNo  = projectData.ledger + '-' + Date.now().toString().slice(-4);
+  const total  = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  document.getElementById('complete-detail').innerHTML = `
+    <div class="complete-row"><span class="label">受付番号</span><span class="value">${refNo}</span></div>
+    <div class="complete-row"><span class="label">案件名</span><span class="value">${projectData.name}</span></div>
+    <div class="complete-row"><span class="label">帳合No.</span><span class="value">${projectData.ledger}</span></div>
+    <div class="complete-row"><span class="label">申請者</span><span class="value">${projectData.applicant}</span></div>
+    <div class="complete-row"><span class="label">明細件数</span><span class="value">${items.length}件</span></div>
+    <div class="complete-row"><span class="label">精算合計</span><span class="value">¥${total.toLocaleString()}</span></div>
+    <div class="complete-row"><span class="label">予算残高</span><span class="value">¥${(projectData.budget - total).toLocaleString()}</span></div>
+  `;
+  setStep(4);
+});
+
+document.getElementById('btn-new').addEventListener('click', () => {
+  items = [];
+  nextId = 1;
+  projectData = {};
+  document.getElementById('items-container').innerHTML = '';
+  ['p-name','p-ledger','p-applicant','p-purpose'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('p-budget').value = '';
+  document.getElementById('p-date').value = getToday();
+  setStep(1);
+});
+
+// ===================== 確認画面構築 =====================
+function buildConfirm() {
+  const total  = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const balance = projectData.budget - total;
+
+  let html = `
+    <div class="confirm-section">
+      <div class="confirm-title">案件情報</div>
+      <div class="confirm-row"><span class="label">案件名</span><span class="value">${projectData.name}</span></div>
+      <div class="confirm-row"><span class="label">帳合No.</span><span class="value">${projectData.ledger}</span></div>
+      <div class="confirm-row"><span class="label">申請者</span><span class="value">${projectData.applicant}</span></div>
+      <div class="confirm-row"><span class="label">提出日</span><span class="value">${projectData.date}</span></div>
+      <div class="confirm-row"><span class="label">目的</span><span class="value">${projectData.purpose || '—'}</span></div>
+      <div class="confirm-row"><span class="label">予算額</span><span class="value">¥${projectData.budget.toLocaleString()}</span></div>
+    </div>
+    <div class="confirm-section">
+      <div class="confirm-title">経費明細 (${items.length}件)</div>
+      <div class="confirm-items">
+        ${items.map(it => `
+        <div class="confirm-item">
+          <div class="confirm-item-head">
+            <span class="confirm-item-cat">${it.category.split('（')[0]}</span>
+            <strong>¥${(parseFloat(it.amount)||0).toLocaleString()}</strong>
+          </div>
+          <div class="confirm-item-desc">${it.description || '（摘要なし）'} ／ ${it.tax}${it.invoice ? ' ／ ' + it.invoice : ''}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="confirm-section">
+      <div class="confirm-title">合計</div>
+      <div class="confirm-row"><span class="label">精算合計</span><span class="value" style="color:#2563eb;font-size:16px;">¥${total.toLocaleString()}</span></div>
+      <div class="confirm-row"><span class="label">予算残高</span><span class="value ${balance < 0 ? 'balance-neg' : ''}">¥${balance.toLocaleString()}</span></div>
+    </div>
+  `;
+  document.getElementById('confirm-body').innerHTML = html;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>経費精算 - 管理画面</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  background: #f5f6f8;
+  color: #1a1a1a;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 220px;
+  background: #1e293b;
+  color: #cbd5e1;
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-shrink: 0;
+}
+.sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid #334155; margin-bottom: 16px; }
+.sidebar-logo h1 { font-size: 16px; color: #fff; font-weight: 700; }
+.sidebar-logo .demo-tag {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  font-size: 9px; padding: 2px 8px;
+  border-radius: 10px; margin-top: 6px; letter-spacing: 0.05em;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; cursor: pointer; font-size: 13px; transition: all 0.15s;
+}
+.nav-item:hover { background: #334155; color: #fff; }
+.nav-item.active { background: #2563eb; color: #fff; border-left: 3px solid #60a5fa; padding-left: 17px; }
+
+.main { flex: 1; padding: 32px 40px; min-width: 0; }
+.page-header { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
+.page-title { font-size: 24px; font-weight: 700; }
+.page-subtitle { font-size: 13px; color: #6b7280; margin-top: 4px; }
+.btn {
+  padding: 9px 18px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:hover { background: #1e40af; }
+.btn-secondary { background: #fff; color: #475569; border: 1px solid #d1d5db; }
+.btn-secondary:hover { background: #f8fafc; }
+.btn-success { background: #10b981; color: #fff; }
+.btn-success:hover { background: #059669; }
+.btn-danger { background: #fff; color: #dc2626; border: 1px solid #fecaca; }
+.btn-danger:hover { background: #fef2f2; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.summary-card { background: #fff; border: 1px solid #e2e5ea; border-radius: 12px; padding: 18px 20px; }
+.summary-label { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.summary-value { font-size: 22px; font-weight: 700; margin-top: 6px; color: #1a1a1a; }
+.summary-sub { font-size: 11px; color: #6b7280; margin-top: 4px; }
+.summary-trend { font-size: 11px; color: #10b981; margin-top: 4px; }
+.summary-trend.warning { color: #f59e0b; }
+
+.toolbar {
+  background: #fff; border: 1px solid #e2e5ea;
+  border-radius: 12px 12px 0 0; padding: 14px 18px;
+  border-bottom: none; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.search-box { flex: 1; min-width: 200px; position: relative; }
+.search-box input {
+  width: 100%; padding: 8px 12px 8px 32px;
+  border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: inherit;
+}
+.search-box input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.search-box::before {
+  content: "🔍"; position: absolute; left: 10px; top: 50%;
+  transform: translateY(-50%); font-size: 12px; opacity: 0.5;
+}
+.filter-chip {
+  padding: 6px 12px; background: #f1f5f9; border: 1px solid #e2e5ea;
+  border-radius: 16px; font-size: 12px; cursor: pointer; color: #475569;
+}
+.filter-chip.active { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+
+.table-wrap { background: #fff; border: 1px solid #e2e5ea; border-radius: 0 0 12px 12px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8fafc; }
+th, td { padding: 12px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
+tbody tr { cursor: pointer; transition: background 0.1s; }
+tbody tr:hover { background: #f8fafc; }
+tbody tr:last-child td { border-bottom: none; }
+.num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.balance-neg { color: #dc2626; }
+
+.status {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 12px; font-size: 11px; font-weight: 600;
+}
+.status-pending  { background: #fef3c7; color: #92400e; }
+.status-approved { background: #d1fae5; color: #065f46; }
+.status-rejected { background: #fee2e2; color: #991b1b; }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15,23,42,0.55); z-index: 100; align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+
+/* ─── 明細詳細サブモーダル ─── */
+.item-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15,23,42,0.65); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.item-overlay.show { display: flex; }
+.item-modal {
+  background: #fff; border-radius: 16px;
+  width: 96%; max-width: 760px; max-height: 90vh;
+  display: flex; flex-direction: column;
+  animation: slideUp 0.2s;
+}
+.item-modal-header {
+  padding: 16px 20px; border-bottom: 1px solid #e2e5ea;
+  display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+}
+.item-modal-header h4 { font-size: 15px; font-weight: 700; }
+.item-modal-body { display: flex; overflow-y: auto; flex: 1; }
+.receipt-panel {
+  width: 240px; flex-shrink: 0; background: #f8fafc;
+  border-right: 1px solid #e2e5ea; padding: 20px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.receipt-label { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.receipt-slip {
+  width: 180px; background: #fff;
+  border: 1px solid #e2e5ea; border-radius: 4px 4px 0 0;
+  padding: 14px 12px 20px; font-size: 10px; line-height: 1.7;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative;
+}
+.receipt-slip::after {
+  content: ''; position: absolute; bottom: -8px; left: 0; right: 0; height: 8px;
+  background: repeating-linear-gradient(-45deg, #fff 0 4px, #f8fafc 4px 8px);
+}
+.receipt-slip .r-shop { font-weight: 700; font-size: 11px; text-align: center; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #ccc; }
+.receipt-slip .r-amount { font-size: 18px; font-weight: 700; text-align: center; margin: 8px 0; color: #1a1a1a; }
+.receipt-slip .r-row { display: flex; justify-content: space-between; color: #6b7280; }
+.receipt-slip .r-no { margin-top: 8px; padding-top: 6px; border-top: 1px dashed #ccc; font-size: 9px; color: #94a3b8; text-align: center; }
+.receipt-upload-btn {
+  width: 100%; padding: 7px; border: 1px dashed #93c5fd; border-radius: 8px;
+  background: #eff6ff; color: #2563eb; font-size: 11px; font-weight: 600;
+  cursor: pointer; text-align: center;
+}
+.edit-panel { flex: 1; padding: 20px; overflow-y: auto; }
+.edit-field { margin-bottom: 14px; }
+.edit-field label { display: block; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 5px; }
+.edit-field input, .edit-field select, .edit-field textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px;
+  font-size: 13px; font-family: inherit; background: #fff;
+}
+.edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus {
+  outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.edit-field textarea { resize: vertical; min-height: 64px; }
+.edit-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.item-modal-footer {
+  padding: 14px 20px; border-top: 1px solid #e2e5ea;
+  display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+}
+.items-table tbody tr { cursor: pointer; }
+.items-table tbody tr:hover { background: #eff6ff; }
+
+.modal {
+  background: #fff; border-radius: 16px;
+  width: 96%; max-width: 860px; max-height: 92vh; overflow-y: auto;
+  animation: slideUp 0.25s;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header {
+  padding: 20px 24px; border-bottom: 1px solid #e2e5ea;
+  display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; background: #fff; z-index: 1;
+}
+.modal-header h3 { font-size: 17px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; padding: 4px; }
+.modal-body { padding: 20px 24px; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.info-item { }
+.info-label { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.info-value { font-size: 14px; font-weight: 600; }
+
+.budget-bar-wrap { background: #f1f5f9; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; }
+.budget-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+.budget-bar { height: 8px; background: #e2e5ea; border-radius: 4px; overflow: hidden; }
+.budget-fill { height: 100%; background: #2563eb; border-radius: 4px; transition: width 0.5s; }
+.budget-fill.over { background: #dc2626; }
+
+.items-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px; }
+.items-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.items-table th {
+  background: #f8fafc; padding: 8px 10px; text-align: left;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #6b7280; border-bottom: 2px solid #e2e5ea;
+}
+.items-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
+.items-table tr:last-child td { border-bottom: none; }
+.items-table .total-row td { font-weight: 700; background: #f8fafc; border-top: 2px solid #e2e5ea; }
+.cat-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 8px;
+  background: #eff6ff; color: #1e40af; font-size: 10px; font-weight: 600;
+}
+.invoice-none { color: #94a3b8; font-style: italic; }
+
+.modal-footer {
+  padding: 16px 24px; border-top: 1px solid #e2e5ea;
+  display: flex; justify-content: flex-end; gap: 8px;
+  position: sticky; bottom: 0; background: #fff;
+}
+
+@media (max-width: 768px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: 20px; }
+  .info-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>経費精算</h1>
+      <span class="demo-tag">DEMO v0.2</span>
+    </div>
+    <div class="nav-item active">📋 案件一覧</div>
+    <div class="nav-item">✅ 承認待ち</div>
+    <div class="nav-item">📊 集計レポート</div>
+    <div class="nav-item">⚙️ 設定</div>
+    <div class="nav-item" style="margin-top:16px;" id="nav-to-index">🔗 申請ページを開く</div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">案件一覧</h1>
+        <p class="page-subtitle" id="page-subtitle">2026年4月分</p>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" id="btn-csv">📥 CSV出力</button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">承認待ち案件</div>
+        <div class="summary-value" id="dash-pending">—</div>
+        <div class="summary-trend warning" id="dash-pending-trend">⏳ 要対応</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">承認済み精算合計</div>
+        <div class="summary-value" id="dash-settled">—</div>
+        <div class="summary-trend">承認済み案件の合計</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">予算合計</div>
+        <div class="summary-value" id="dash-budget">—</div>
+        <div class="summary-sub" id="dash-budget-sub">全案件合算</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">平均予算消化率</div>
+        <div class="summary-value" id="dash-rate">—</div>
+        <div class="summary-trend">承認済み案件の平均</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-box"><input type="text" id="search-input" placeholder="案件名・帳合No.・申請者で検索..."></div>
+      <div class="filter-chip active" data-filter="すべて">すべて</div>
+      <div class="filter-chip" data-filter="承認待ち">承認待ち</div>
+      <div class="filter-chip" data-filter="承認済み">承認済み</div>
+      <div class="filter-chip" data-filter="差し戻し">差し戻し</div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>案件名</th>
+            <th>帳合No.</th>
+            <th>申請者</th>
+            <th class="num">予算額</th>
+            <th class="num">精算額</th>
+            <th class="num">残高</th>
+            <th>提出日</th>
+            <th>状態</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- モーダル -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">案件詳細</h3>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger"   id="btn-reject"  onclick="rejectItem()">差し戻す</button>
+      <button class="btn btn-success"  id="btn-approve" onclick="approveItem()">✓ 承認する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 明細詳細サブモーダル -->
+<div class="item-overlay" id="item-modal">
+  <div class="item-modal">
+    <div class="item-modal-header">
+      <h4 id="item-modal-title">明細詳細・修正</h4>
+      <button class="modal-close" onclick="closeItemModal()">✕</button>
+    </div>
+    <div class="item-modal-body">
+      <div class="receipt-panel">
+        <div class="receipt-label">領収書画像</div>
+        <div class="receipt-slip" id="receipt-slip-preview"></div>
+        <div class="receipt-upload-btn">📎 画像を差し替える</div>
+      </div>
+      <div class="edit-panel">
+        <div class="edit-row-2">
+          <div class="edit-field">
+            <label>月日</label>
+            <input type="text" id="edit-monthDay" placeholder="10/21">
+          </div>
+          <div class="edit-field">
+            <label>レシートNo.</label>
+            <input type="text" id="edit-receiptNo" placeholder="1">
+          </div>
+        </div>
+        <div class="edit-field">
+          <label>科目グループ</label>
+          <select id="edit-category"></select>
+        </div>
+        <div class="edit-field">
+          <label>摘要</label>
+          <textarea id="edit-description" rows="3"></textarea>
+        </div>
+        <div class="edit-row-2">
+          <div class="edit-field">
+            <label>金額（円）</label>
+            <input type="number" id="edit-amount" min="0">
+          </div>
+          <div class="edit-field">
+            <label>税率</label>
+            <select id="edit-tax">
+              <option>10%</option>
+              <option>8%軽減</option>
+              <option>非課税</option>
+            </select>
+          </div>
+        </div>
+        <div class="edit-field">
+          <label>インボイス番号</label>
+          <input type="text" id="edit-invoice" placeholder="T1234567890123">
+        </div>
+      </div>
+    </div>
+    <div class="item-modal-footer">
+      <button class="btn btn-secondary" onclick="closeItemModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveItemModal()">✓ 保存する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== データ =====================
+const dummyProjects = [
+  {
+    id: 'EXP-2604-P01',
+    projectName: 'ボートレース イメージ映像制作',
+    ledgerNo: '22po5278-242',
+    applicant: '北村智子',
+    date: '2024-02-13',
+    purpose: '撮影・編集',
+    budget: 300000,
+    settled: 242460,
+    advance: 57540,
+    status: 'pending',
+    items: [
+      // 会議費 16行
+      { category: '会議費',    description: 'ロケハン 昼食代（水野・藤原・林・白銀）計4名',             monthDay: '10/21', receiptNo: 1,  amount: 4236,  tax: '10%',   invoice: 'T1234567890101' },
+      { category: '会議費',    description: 'ロケハン 飲料代（水野）計1名',                           monthDay: '10/21', receiptNo: 2,  amount: 159,   tax: '8%軽減', invoice: 'T1234567890102' },
+      { category: '会議費',    description: '撮影 撮影用飲料代（10/31,12/1,12/22分）計27名',          monthDay: '10/27', receiptNo: 3,  amount: 2210,  tax: '8%軽減', invoice: 'T1234567890103' },
+      { category: '会議費',    description: '撮影 撮影用飲料代（同上）',                              monthDay: '10/27', receiptNo: 4,  amount: 1745,  tax: '8%軽減', invoice: 'T1234567890104' },
+      { category: '会議費',    description: '撮影 撮影用飲料代（同上）',                              monthDay: '10/27', receiptNo: 5,  amount: 2137,  tax: '8%軽減', invoice: 'T1234567890105' },
+      { category: '会議費',    description: '撮影 前泊夕食代（水野・藤原・林・白銀）計4名',            monthDay: '10/30', receiptNo: 6,  amount: 3695,  tax: '10%',   invoice: 'T1234567890106' },
+      { category: '会議費',    description: '撮影 朝食代 計35名',                                    monthDay: '10/31', receiptNo: 7,  amount: 20790, tax: '8%軽減', invoice: 'T1234567890107' },
+      { category: '会議費',    description: '撮影 昼食代 計35名',                                    monthDay: '10/31', receiptNo: 8,  amount: 39550, tax: '8%軽減', invoice: 'T1234567890108' },
+      { category: '会議費',    description: '撮影 夕食代（水野・藤原・林・白銀）計4名',               monthDay: '10/31', receiptNo: 9,  amount: 4010,  tax: '10%',   invoice: 'T1234567890109' },
+      { category: '会議費',    description: '撮影 前泊夕食代（水野・藤原・林・白銀）計4名',            monthDay: '11/30', receiptNo: 10, amount: 4250,  tax: '10%',   invoice: 'T1234567890110' },
+      { category: '会議費',    description: '撮影 翌日朝食代（水野・藤原・林・白銀）計4名',           monthDay: '11/30', receiptNo: 11, amount: 2631,  tax: '8%軽減', invoice: 'T1234567890111' },
+      { category: '会議費',    description: '撮影 朝食代（水野）計1名',                              monthDay: '12/1',  receiptNo: 12, amount: 531,   tax: '8%軽減', invoice: 'T1234567890112' },
+      { category: '会議費',    description: '撮影 朝食代（林）計1名',                               monthDay: '12/1',  receiptNo: 13, amount: 610,   tax: '8%軽減', invoice: 'T1234567890113' },
+      { category: '会議費',    description: '撮影 昼食代 計33名',                                    monthDay: '12/1',  receiptNo: 14, amount: 36300, tax: '8%軽減', invoice: 'T1234567890114' },
+      { category: '会議費',    description: '撮影 夕食代（水野・藤原・林・白銀）計4名',               monthDay: '12/1',  receiptNo: 15, amount: 4300,  tax: '10%',   invoice: 'T1234567890115' },
+      { category: '会議費',    description: '撮影 昼食代 計11名',                                    monthDay: '12/22', receiptNo: 16, amount: 9010,  tax: '8%軽減', invoice: 'T1234567890116' },
+      // 旅費交通費① 13行
+      { category: '旅費交通費①', description: '打合せ 駐車場代（撮影車両）',                         monthDay: '10/21', receiptNo: 17, amount: 2000,  tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: 'ロケハン 駐車場代（撮影車両）',                       monthDay: '10/21', receiptNo: 18, amount: 550,   tax: '10%',   invoice: 'T1234567890118' },
+      { category: '旅費交通費①', description: '撮影準備 電車代（大阪上本町→大阪難波 水野）計1名',    monthDay: '10/28', receiptNo: '', amount: 180,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: '撮影準備 電車代（大阪難波→谷町四丁目 水野）計1名',    monthDay: '10/28', receiptNo: '', amount: 240,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: '撮影準備 電車代（谷町四丁目→大阪難波 水野）計1名',    monthDay: '10/30', receiptNo: '', amount: 240,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: '撮影準備 電車代（大阪難波→谷町四丁目 水野）計1名',    monthDay: '10/30', receiptNo: '', amount: 240,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: '撮影 タクシー代（阿倍野→中津 林 早朝出発の為）計1名', monthDay: '10/31', receiptNo: 19, amount: 4600,  tax: '10%',   invoice: 'T1234567890123' },
+      { category: '旅費交通費①', description: '撮影 駐車場代（東野 早朝出発の為）計1名',             monthDay: '10/31', receiptNo: 20, amount: 1540,  tax: '10%',   invoice: 'T1234567890124' },
+      { category: '旅費交通費①', description: '撮影 駐車場代（ホテルに駐車場無かった為）',           monthDay: '11/30', receiptNo: 21, amount: 700,   tax: '10%',   invoice: 'T1234567890125' },
+      { category: '旅費交通費①', description: '撮影 駐車場代（撮影車両）',                          monthDay: '12/22', receiptNo: 22, amount: 400,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: '撮影 駐車場代（車両部車両）',                        monthDay: '12/22', receiptNo: 23, amount: 400,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: '編集 電車代（大阪→天満 水野）計1名',                 monthDay: '12/25', receiptNo: '', amount: 140,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: '編集 電車代（南森町→谷町四丁目 水野）計1名',          monthDay: '12/25', receiptNo: '', amount: 190,   tax: '10%',   invoice: '' },
+      // 旅費交通費② 3行
+      { category: '旅費交通費②', description: '撮影 宿泊代（水野・藤原・林・白銀）計4名',            monthDay: '10/30', receiptNo: 24, amount: 24885, tax: '10%',   invoice: 'T1234567890130' },
+      { category: '旅費交通費②', description: '撮影 宿泊代（林）計1名',                             monthDay: '11/30', receiptNo: 25, amount: 5276,  tax: '10%',   invoice: '' },
+      { category: '旅費交通費②', description: '撮影 宿泊代（水野・藤原・林・白銀）計4名',            monthDay: '11/30', receiptNo: 26, amount: 28000, tax: '10%',   invoice: 'T1234567890132' },
+      // 車両費 3行
+      { category: '車両費',    description: 'ロケハン 軽油代（撮影車両用）',                         monthDay: '10/21', receiptNo: 27, amount: 2199,  tax: '10%',   invoice: 'T1234567890133' },
+      { category: '車両費',    description: '撮影 軽油代（撮影車両用）',                             monthDay: '10/31', receiptNo: 28, amount: 3621,  tax: '10%',   invoice: 'T1234567890134' },
+      { category: '車両費',    description: 'ロケハン 軽油代（撮影車両用）',                         monthDay: '11/21', receiptNo: 29, amount: 1300,  tax: '10%',   invoice: 'T1234567890135' },
+      // 制作諸経費 8行
+      { category: '制作諸経費', description: '撮影用備品代（ゴーグル）',                             monthDay: '10/28', receiptNo: 30, amount: 2200,  tax: '10%',   invoice: 'T1234567890136' },
+      { category: '制作諸経費', description: '撮影用備品代（ホワイトボード）',                       monthDay: '10/28', receiptNo: 31, amount: 2200,  tax: '10%',   invoice: 'T1234567890137' },
+      { category: '制作諸経費', description: '撮影用備品代（白・赤布）',                             monthDay: '10/30', receiptNo: 32, amount: 1796,  tax: '10%',   invoice: 'T1234567890138' },
+      { category: '制作諸経費', description: '撮影用備品代（マグネットシート）',                     monthDay: '10/30', receiptNo: 33, amount: 110,   tax: '10%',   invoice: 'T1234567890139' },
+      { category: '制作諸経費', description: '撮影用備品代（タオル・突っ張り棒・カラーマグネット）',  monthDay: '10/30', receiptNo: 34, amount: 11744, tax: '10%',   invoice: 'T1234567890140' },
+      { category: '制作諸経費', description: '撮影用備品代（カイロ）',                               monthDay: '',      receiptNo: 35, amount: 1300,  tax: '10%',   invoice: 'T1234567890141' },
+      { category: '制作諸経費', description: '撮影用ケータリング代',                                 monthDay: '11/30', receiptNo: 36, amount: 8695,  tax: '8%軽減', invoice: 'T1234567890142' },
+      { category: '制作諸経費', description: '配送費（トランシーバー返却）',                         monthDay: '12/2',  receiptNo: 37, amount: 1550,  tax: '10%',   invoice: 'T1234567890143' },
+    ]
+  },
+  {
+    id: 'EXP-2604-P02',
+    projectName: '駅伝2024告知ムービー',
+    ledgerNo: '23po5010-002',
+    applicant: '平田',
+    date: '2024-01-05',
+    purpose: '撮影',
+    budget: 250000,
+    settled: 191394,
+    advance: 58606,
+    status: 'approved',
+    items: [
+      // 会議費 9行
+      { category: '会議費',    description: '撮影 夕食代（平田・千葉・遠藤・渡辺）計4名',               monthDay: '12/11', receiptNo: 1,  amount: 7880,  tax: '10%', invoice: 'T1234567890201' },
+      { category: '会議費',    description: '撮影 朝食代（平田）計1名',                               monthDay: '12/12', receiptNo: 2,  amount: 700,   tax: '10%', invoice: 'T1234567890202' },
+      { category: '会議費',    description: '撮影 朝食代（千葉）計1名',                               monthDay: '12/12', receiptNo: 3,  amount: 700,   tax: '10%', invoice: 'T1234567890203' },
+      { category: '会議費',    description: '撮影 朝食代（遠藤）計1名',                               monthDay: '12/12', receiptNo: 4,  amount: 700,   tax: '10%', invoice: 'T1234567890204' },
+      { category: '会議費',    description: '撮影 朝食代（渡辺）計1名',                               monthDay: '12/12', receiptNo: 5,  amount: 700,   tax: '10%', invoice: 'T1234567890205' },
+      { category: '会議費',    description: '撮影 飲料代（平田・千葉・遠藤・渡辺）計4名 ※自販機購入',  monthDay: '12/12', receiptNo: '', amount: 600,   tax: '10%', invoice: '' },
+      { category: '会議費',    description: '撮影 夕食代（平田・千葉・遠藤・渡辺）計4名',               monthDay: '12/12', receiptNo: 6,  amount: 7200,  tax: '10%', invoice: 'T1234567890207' },
+      { category: '会議費',    description: '撮影 飲料代（平田・千葉・遠藤・渡辺）計4名',               monthDay: '12/12', receiptNo: 7,  amount: 1020,  tax: '10%', invoice: 'T1234567890208' },
+      { category: '会議費',    description: '撮影 朝食代（平田・千葉・遠藤・渡辺）計4名',               monthDay: '12/13', receiptNo: 8,  amount: 3564,  tax: '10%', invoice: 'T1234567890209' },
+      // 制作諸経費 3行
+      { category: '制作諸経費', description: '撮影 カーフェリー宿泊 バスタオルレンタル代',              monthDay: '12/11', receiptNo: 9,  amount: 800,   tax: '10%', invoice: 'T1234567890210' },
+      { category: '制作諸経費', description: '撮影 カーフェリー宿泊 バスタオルレンタル代',              monthDay: '12/12', receiptNo: 10, amount: 600,   tax: '10%', invoice: 'T1234567890211' },
+      { category: '制作諸経費', description: '撮影 ひなた陸上競技場 撮影使用料',                      monthDay: '12/12', receiptNo: 11, amount: 10420, tax: '10%', invoice: '' },
+      // 旅費交通費① 3行
+      { category: '旅費交通費①', description: '撮影 カーフェリー代 神戸港→宮崎港（平田・千葉・遠藤・渡辺）計4名', monthDay: '12/11', receiptNo: 12, amount: 74170, tax: '10%', invoice: 'T1234567890213' },
+      { category: '旅費交通費①', description: '撮影 カーフェリー代 宮崎港→神戸港（平田・千葉・遠藤・渡辺）計4名', monthDay: '12/12', receiptNo: 13, amount: 74170, tax: '10%', invoice: 'T1234567890214' },
+      { category: '旅費交通費①', description: 'MA 電車代（谷町四丁目→肥後橋）平田',                   monthDay: '12/25', receiptNo: '', amount: 190,   tax: '10%', invoice: '' },
+      // 旅費交通費② 1行
+      { category: '旅費交通費②', description: '撮影 前日入りホテル宿泊（嬉々）計1名',                 monthDay: '12/11', receiptNo: 14, amount: 7980,  tax: '10%', invoice: 'T1234567890216' },
+    ]
+  },
+  {
+    id: 'EXP-2604-P03',
+    projectName: 'ソフトボール部 選手紹介映像2026改訂',
+    ledgerNo: '25po5159-002',
+    applicant: '佐藤 一郎',
+    date: '2026-03-24',
+    purpose: '撮影',
+    budget: 50000,
+    settled: 32256,
+    advance: 17744,
+    status: 'rejected',
+    items: [
+      // 会議費 5行
+      { category: '会議費',    description: '軽食費（選手用軽食）',                                                       monthDay: '2/24', receiptNo: 1,  amount: 2371,  tax: '8%軽減', invoice: 'T1234567890301' },
+      { category: '会議費',    description: '飲料費（選手用飲料）',                                                       monthDay: '2/24', receiptNo: 2,  amount: 804,   tax: '8%軽減', invoice: 'T1234567890302' },
+      { category: '会議費',    description: '軽食費（斎藤・鈴木・新井・原田・片山・松本・村上他2名 計9名）',               monthDay: '2/25', receiptNo: 3,  amount: 2991,  tax: '8%軽減', invoice: 'T1234567890303' },
+      { category: '会議費',    description: '昼食費（斎藤・鈴木・新井・原田・片山・松本・村上他2名 計9名）',               monthDay: '2/25', receiptNo: 4,  amount: 10110, tax: '10%',   invoice: 'T1234567890304' },
+      { category: '会議費',    description: '飲料費（水¥130×6本・麦茶¥140×3本・フルーツティ¥170×5本）※自動販売機購入', monthDay: '2/25', receiptNo: '', amount: 2050,  tax: '8%軽減', invoice: '' },
+      // 旅費交通費① 1行
+      { category: '旅費交通費①', description: '駐車場代',                                                                monthDay: '2/25', receiptNo: 5,  amount: 850,   tax: '10%',   invoice: 'T1234567890306' },
+      // 車両費 1行
+      { category: '車両費',    description: '撮影 制作車レンタカー燃料 レギュラー',                                       monthDay: '2/25', receiptNo: 6,  amount: 1610,  tax: '10%',   invoice: 'T1234567890307' },
+      // 制作諸経費 2行
+      { category: '制作諸経費', description: 'USB変換ケーブル',                                                           monthDay: '2/12', receiptNo: 7,  amount: 2970,  tax: '10%',   invoice: 'T1234567890308' },
+      { category: '制作諸経費', description: 'クロスガファーテープ',                                                       monthDay: '2/19', receiptNo: 8,  amount: 8500,  tax: '10%',   invoice: '' },
+    ]
+  }
+];
+
+const statusLabel = { pending: '承認待ち', approved: '承認済み', rejected: '差し戻し' };
+const statusClass  = { pending: 'status-pending', approved: 'status-approved', rejected: 'status-rejected' };
+
+let currentFilter = 'すべて';
+let currentSearch  = '';
+let currentOpenId  = null;
+let currentItemIdx = null;
+
+const CATEGORIES_ADMIN = ['会議費','旅費交通費①','旅費交通費②','車両費','制作諸経費','通信費','郵便・宅急便代','その他'];
+
+// ===================== フィルタ =====================
+function getFiltered() {
+  const q = currentSearch.trim().toLowerCase();
+  return dummyProjects.filter(p => {
+    const matchStatus = currentFilter === 'すべて' || statusLabel[p.status] === currentFilter;
+    const matchSearch = !q || [p.projectName, p.ledgerNo, p.applicant].some(v => v.toLowerCase().includes(q));
+    return matchStatus && matchSearch;
+  });
+}
+
+// ===================== ダッシュボード =====================
+function updateDashboard() {
+  const pending  = dummyProjects.filter(p => p.status === 'pending').length;
+  const approved = dummyProjects.filter(p => p.status === 'approved');
+  const allBudget = dummyProjects.reduce((s, p) => s + p.budget, 0);
+  const settledTotal = approved.reduce((s, p) => s + p.settled, 0);
+  const rates = approved.map(p => Math.round(p.settled / p.budget * 100));
+  const avgRate = rates.length ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length) : 0;
+
+  document.getElementById('dash-pending').textContent  = `${pending}件`;
+  document.getElementById('dash-settled').textContent  = `¥${settledTotal.toLocaleString()}`;
+  document.getElementById('dash-budget').textContent   = `¥${allBudget.toLocaleString()}`;
+  document.getElementById('dash-rate').textContent     = approved.length ? `${avgRate}%` : '—';
+
+  const trendEl = document.getElementById('dash-pending-trend');
+  trendEl.textContent = pending > 0 ? '⏳ 要対応' : '✅ すべて完了';
+  trendEl.className   = `summary-trend ${pending > 0 ? 'warning' : ''}`;
+}
+
+// ===================== テーブル描画 =====================
+function renderTable() {
+  const data  = getFiltered();
+  const tbody = document.getElementById('rows');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:#6b7280;">該当する案件がありません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(p => {
+    const balance    = p.budget - p.settled;
+    const balanceCls = balance < 0 ? ' balance-neg' : '';
+    const rate       = Math.round(p.settled / p.budget * 100);
+    return `
+    <tr data-id="${p.id}">
+      <td><strong>${p.projectName}</strong></td>
+      <td style="color:#6b7280;font-size:12px;">${p.ledgerNo}</td>
+      <td>${p.applicant}</td>
+      <td class="num">¥${p.budget.toLocaleString()}</td>
+      <td class="num">¥${p.settled.toLocaleString()} <span style="font-size:10px;color:#6b7280;">(${rate}%)</span></td>
+      <td class="num${balanceCls}">¥${balance.toLocaleString()}</td>
+      <td style="color:#6b7280;">${p.date}</td>
+      <td><span class="status ${statusClass[p.status]}">${statusLabel[p.status]}</span></td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => openModal(tr.dataset.id));
+  });
+}
+
+// ===================== モーダル =====================
+function openModal(id) {
+  currentOpenId = id;
+  const p = dummyProjects.find(d => d.id === id);
+  if (!p) return;
+
+  document.getElementById('modal-title').textContent = p.projectName;
+  const rate    = Math.round(p.settled / p.budget * 100);
+  const balance = p.budget - p.settled;
+  const overBudget = balance < 0;
+  const itemsTotal  = p.items.reduce((s, it) => s + it.amount, 0);
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">帳合No.</div><div class="info-value">${p.ledgerNo}</div></div>
+      <div class="info-item"><div class="info-label">申請者</div><div class="info-value">${p.applicant}</div></div>
+      <div class="info-item"><div class="info-label">提出日</div><div class="info-value">${p.date}</div></div>
+      <div class="info-item"><div class="info-label">目的</div><div class="info-value">${p.purpose}</div></div>
+      <div class="info-item"><div class="info-label">状態</div><div class="info-value"><span class="status ${statusClass[p.status]}">${statusLabel[p.status]}</span></div></div>
+    </div>
+    <div class="budget-bar-wrap">
+      <div class="budget-row">
+        <span>予算額 <strong>¥${p.budget.toLocaleString()}</strong></span>
+        <span>精算額 <strong>¥${p.settled.toLocaleString()}</strong></span>
+        <span style="color:${overBudget ? '#dc2626' : '#10b981'}">残高 <strong>¥${balance.toLocaleString()}</strong></span>
+      </div>
+      <div class="budget-bar">
+        <div class="budget-fill ${overBudget ? 'over' : ''}" style="width:${Math.min(rate,100)}%"></div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:#6b7280;margin-top:4px;">消化率 ${rate}%</div>
+    </div>
+    <div class="items-title">明細 (${p.items.length}件)</div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width:52px;">月日</th>
+          <th style="width:36px;">No.</th>
+          <th>科目グループ</th>
+          <th>摘要</th>
+          <th style="text-align:right;">金額</th>
+          <th>税率</th>
+          <th>インボイス番号</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${p.items.map((it, idx) => `
+        <tr onclick="openItemModal('${p.id}', ${idx})">
+          <td style="font-size:11px;color:#6b7280;white-space:nowrap;">${it.monthDay}</td>
+          <td style="font-size:11px;color:#6b7280;text-align:right;">${it.receiptNo !== '' ? it.receiptNo : '<span style="color:#94a3b8;">無</span>'}</td>
+          <td><span class="cat-badge">${it.category}</span></td>
+          <td>${it.description}</td>
+          <td style="text-align:right;font-weight:600;">¥${it.amount.toLocaleString()}</td>
+          <td style="font-size:11px;">${it.tax}</td>
+          <td style="font-size:11px;">${it.invoice || '<span class="invoice-none">なし</span>'}</td>
+        </tr>`).join('')}
+        <tr class="total-row">
+          <td colspan="4">合計</td>
+          <td style="text-align:right;">¥${itemsTotal.toLocaleString()}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  const approveBtn = document.getElementById('btn-approve');
+  const rejectBtn  = document.getElementById('btn-reject');
+  approveBtn.disabled = p.status === 'approved';
+  rejectBtn.disabled  = p.status === 'rejected';
+  approveBtn.style.opacity = p.status === 'approved' ? '0.4' : '1';
+  rejectBtn.style.opacity  = p.status === 'rejected'  ? '0.4' : '1';
+
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+  currentOpenId = null;
+}
+
+function openItemModal(projectId, itemIdx) {
+  const p  = dummyProjects.find(d => d.id === projectId);
+  const it = p.items[itemIdx];
+  currentItemIdx = itemIdx;
+
+  document.getElementById('item-modal-title').textContent =
+    `明細詳細・修正（No.${it.receiptNo !== '' ? it.receiptNo : '—'} ／ ${it.monthDay || '日付なし'}）`;
+
+  const taxRate = it.tax === '8%軽減' ? 8/108 : it.tax === '10%' ? 10/110 : 0;
+  document.getElementById('receipt-slip-preview').innerHTML = `
+    <div class="r-shop">${it.category}</div>
+    <div class="r-amount">¥${it.amount.toLocaleString()}</div>
+    <div class="r-row"><span>日付</span><span>${it.monthDay || '—'}</span></div>
+    <div class="r-row"><span>税率</span><span>${it.tax}</span></div>
+    <div class="r-row"><span>内税</span><span>¥${Math.round(it.amount * taxRate).toLocaleString()}</span></div>
+    <div class="r-no">No.${it.receiptNo !== '' ? it.receiptNo : '—'}</div>
+  `;
+
+  document.getElementById('edit-monthDay').value    = it.monthDay;
+  document.getElementById('edit-receiptNo').value   = it.receiptNo;
+  document.getElementById('edit-description').value = it.description;
+  document.getElementById('edit-amount').value      = it.amount;
+  document.getElementById('edit-invoice').value     = it.invoice;
+
+  const catSel = document.getElementById('edit-category');
+  catSel.innerHTML = CATEGORIES_ADMIN.map(c =>
+    `<option value="${c}" ${c === it.category ? 'selected' : ''}>${c}</option>`
+  ).join('');
+
+  const taxSel = document.getElementById('edit-tax');
+  [...taxSel.options].forEach(o => { o.selected = o.value === it.tax; });
+
+  document.getElementById('item-modal').classList.add('show');
+}
+
+function closeItemModal() {
+  document.getElementById('item-modal').classList.remove('show');
+  currentItemIdx = null;
+}
+
+function saveItemModal() {
+  const p  = dummyProjects.find(d => d.id === currentOpenId);
+  const it = p.items[currentItemIdx];
+  it.monthDay    = document.getElementById('edit-monthDay').value;
+  it.receiptNo   = document.getElementById('edit-receiptNo').value;
+  it.category    = document.getElementById('edit-category').value;
+  it.description = document.getElementById('edit-description').value;
+  it.amount      = parseFloat(document.getElementById('edit-amount').value) || 0;
+  it.tax         = document.getElementById('edit-tax').value;
+  it.invoice     = document.getElementById('edit-invoice').value;
+  closeItemModal();
+  openModal(currentOpenId);
+}
+
+function approveItem() {
+  const p = dummyProjects.find(d => d.id === currentOpenId);
+  if (p) p.status = 'approved';
+  closeModal();
+  updateDashboard();
+  renderTable();
+}
+
+function rejectItem() {
+  const p = dummyProjects.find(d => d.id === currentOpenId);
+  if (p) p.status = 'rejected';
+  closeModal();
+  updateDashboard();
+  renderTable();
+}
+
+// ===================== CSV出力 =====================
+document.getElementById('btn-csv').addEventListener('click', () => {
+  const headers = ['案件名', '帳合No.', '申請者', '提出日', '予算額', '精算額', '残高', '科目グループ', '摘要', '金額', '税率', 'インボイス番号', '状態'];
+  const rows = [];
+  dummyProjects.forEach(p => {
+    const balance = p.budget - p.settled;
+    if (p.items.length === 0) {
+      rows.push([p.projectName, p.ledgerNo, p.applicant, p.date, p.budget, p.settled, balance, '', '', '', '', '', statusLabel[p.status]]);
+    } else {
+      p.items.forEach((it, i) => {
+        rows.push([
+          i === 0 ? p.projectName : '',
+          i === 0 ? p.ledgerNo   : '',
+          i === 0 ? p.applicant  : '',
+          i === 0 ? p.date       : '',
+          i === 0 ? p.budget     : '',
+          i === 0 ? p.settled    : '',
+          i === 0 ? balance      : '',
+          it.category, it.description, it.amount, it.tax, it.invoice, i === 0 ? statusLabel[p.status] : ''
+        ]);
+      });
+    }
+  });
+  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const bom  = '﻿';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = '精算データ_2026-04.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ===================== イベント =====================
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+document.getElementById('search-input').addEventListener('input', e => {
+  currentSearch = e.target.value;
+  renderTable();
+});
+
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentFilter = chip.dataset.filter;
+    renderTable();
+  });
+});
+
+document.getElementById('nav-to-index').addEventListener('click', () => { window.location.href = 'index.html'; });
+
+// ===================== 初期描画 =====================
+updateDashboard();
+renderTable();
+</script>
+</body>
+</html>

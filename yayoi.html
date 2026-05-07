@@ -3,384 +3,275 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>弥生会計 Professional [第28期] - 現金出納帳</title>
+<title>現金出納帳 - 経費精算</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: "MS UI Gothic","Meiryo","メイリオ","Noto Sans JP",sans-serif;
-  font-size: 12px; color: #1a1a1a; background: #d4d0c8;
-  min-height: 100vh; display: flex; flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  background: #f5f6f8;
+  color: #1a1a1a;
+  font-size: 14px;
+  line-height: 1.6;
 }
-
-/* ===== タイトルバー ===== */
-.titlebar {
-  background: linear-gradient(180deg, #0059b0 0%, #003c8c 100%);
-  color: #fff; padding: 3px 8px; font-size: 11px;
-  display: flex; align-items: center; justify-content: space-between;
-  user-select: none;
-}
-.titlebar-title { font-weight: 700; }
-.titlebar-btns { display: flex; gap: 2px; }
-.titlebar-btn {
-  width: 16px; height: 14px; background: #d4d0c8; border: 1px solid #888;
-  border-top-color: #fff; border-left-color: #fff;
-  font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-
-/* ===== メニューバー ===== */
-.menubar {
-  background: #d4d0c8; border-bottom: 1px solid #808080;
-  padding: 2px 4px; display: flex; gap: 0; user-select: none;
-}
-.menu-item {
-  padding: 2px 8px; font-size: 12px; cursor: pointer;
-  border: 1px solid transparent; border-radius: 2px;
-}
-.menu-item:hover { background: #0059b0; color: #fff; border-color: #0059b0; }
-.menu-item.disabled { color: #888; cursor: default; }
-.menu-item.disabled:hover { background: transparent; color: #888; border-color: transparent; }
-
-/* ===== ツールバー ===== */
-.toolbar {
-  background: #d4d0c8; border-bottom: 2px solid #808080;
-  padding: 3px 4px; display: flex; gap: 4px; align-items: center;
-  flex-wrap: wrap;
-}
-.tool-group { display: flex; gap: 2px; padding: 0 4px; border-right: 1px solid #888; }
-.tool-group:last-child { border-right: none; }
-.tool-btn {
-  padding: 2px 8px; background: #d4d0c8;
-  border: 1px solid transparent;
-  border-top-color: #fff; border-left-color: #fff;
-  border-bottom-color: #808080; border-right-color: #808080;
-  font-size: 11px; font-family: inherit; cursor: pointer;
-  white-space: nowrap;
-}
-.tool-btn:hover { background: #e8e4e0; }
-.tool-btn:active {
-  border-top-color: #808080; border-left-color: #808080;
-  border-bottom-color: #fff; border-right-color: #fff;
-}
-.tool-btn.primary { background: #0059b0; color: #fff; border-color: #003c8c; }
-.tool-btn.primary:hover { background: #0070d0; }
-.tool-sep { width: 1px; background: #808080; height: 20px; margin: 0 2px; }
-
-/* ===== レイアウト ===== */
-.app-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+.layout { display: flex; min-height: 100vh; }
 
 /* ===== サイドバー ===== */
 .sidebar {
-  width: 160px; flex-shrink: 0;
-  background: #d4d0c8; border-right: 2px solid #808080;
-  overflow-y: auto;
-}
-.sidebar-title {
-  background: #0059b0; color: #fff;
-  padding: 3px 6px; font-size: 11px; font-weight: 700;
-}
-.nav-group {
-  padding: 4px 6px 2px; font-size: 10px; font-weight: 700; color: #444;
-  text-transform: uppercase; letter-spacing: 0.03em;
-  border-top: 1px solid #b0b0b0; margin-top: 4px;
-}
-.nav-group:first-of-type { margin-top: 0; border-top: none; }
-.nav-leaf {
-  padding: 3px 6px 3px 14px; font-size: 11px; cursor: pointer;
-  border: 1px solid transparent;
-}
-.nav-leaf:hover { background: #b8d4ff; }
-.nav-leaf.active {
-  background: #0059b0; color: #fff;
-  border: 1px solid #003c8c;
-}
-
-/* ===== メインエリア ===== */
-.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-/* 帳票ヘッダー */
-.ledger-header {
-  background: #0059b0; color: #fff;
-  padding: 4px 10px; display: flex; align-items: center; justify-content: space-between;
+  width: 220px;
+  background: #1e293b;
+  color: #cbd5e1;
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
   flex-shrink: 0;
 }
-.ledger-header-title { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
-.ledger-header-sub { font-size: 10px; opacity: 0.85; }
-
-/* 検索・フィルタバー */
-.filter-bar {
-  background: #e8e4e0; border-bottom: 1px solid #b0b0b0;
-  padding: 4px 8px; display: flex; gap: 8px; align-items: center;
-  flex-shrink: 0; flex-wrap: wrap;
+.sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid #334155; margin-bottom: 16px; }
+.sidebar-logo h1 { font-size: 16px; color: #fff; font-weight: 700; }
+.sidebar-logo .demo-tag {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  font-size: 9px; padding: 2px 8px;
+  border-radius: 10px; margin-top: 6px; letter-spacing: 0.05em;
 }
-.filter-label { font-size: 11px; color: #333; font-weight: 700; white-space: nowrap; }
-.filter-select {
-  padding: 1px 4px; font-size: 11px; font-family: inherit;
-  border: 1px solid #808080;
-  border-top-color: #404040; border-left-color: #404040;
-  background: #fff;
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; cursor: pointer; font-size: 13px; transition: all 0.15s;
+}
+.nav-item:hover { background: #334155; color: #fff; }
+.nav-item.active { background: #2563eb; color: #fff; border-left: 3px solid #60a5fa; padding-left: 17px; }
+.nav-item.disabled { color: #475569; cursor: default; }
+.nav-item.disabled:hover { background: transparent; color: #475569; }
+.nav-divider { border-top: 1px solid #334155; margin: 12px 0; }
+
+/* ===== メイン ===== */
+.main { flex: 1; padding: 32px 40px; min-width: 0; }
+.page-header { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
+.page-title { font-size: 24px; font-weight: 700; }
+.page-subtitle { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+/* ===== ボタン ===== */
+.btn {
+  padding: 9px 18px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:hover { background: #1e40af; }
+.btn-secondary { background: #fff; color: #475569; border: 1px solid #d1d5db; }
+.btn-secondary:hover { background: #f8fafc; }
+.btn-success { background: #10b981; color: #fff; }
+.btn-success:hover { background: #059669; }
+
+/* ===== サマリーカード ===== */
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.summary-card { background: #fff; border: 1px solid #e2e5ea; border-radius: 12px; padding: 18px 20px; }
+.summary-label { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.summary-value { font-size: 22px; font-weight: 700; margin-top: 6px; color: #1a1a1a; }
+.summary-sub { font-size: 11px; color: #6b7280; margin-top: 4px; }
+
+/* ===== ツールバー ===== */
+.toolbar {
+  background: #fff; border: 1px solid #e2e5ea;
+  border-radius: 12px 12px 0 0; padding: 14px 18px;
+  border-bottom: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
 }
 .filter-chip {
-  padding: 1px 8px; font-size: 11px; cursor: pointer;
-  background: #d4d0c8;
-  border: 1px solid #fff; border-bottom-color: #808080; border-right-color: #808080;
+  padding: 6px 14px; background: #f1f5f9; border: 1px solid #e2e5ea;
+  border-radius: 16px; font-size: 12px; cursor: pointer; color: #475569; transition: all 0.15s;
 }
-.filter-chip.active {
-  background: #fff; border-color: #808080;
-  border-top-color: #404040; border-left-color: #404040;
+.filter-chip.active { background: #dbeafe; border-color: #93c5fd; color: #1e40af; font-weight: 600; }
+.filter-sep { width: 1px; height: 20px; background: #e2e5ea; margin: 0 4px; }
+.select-field {
+  padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 8px;
+  font-size: 12px; font-family: inherit; background: #fff; color: #374151; cursor: pointer;
 }
-.balance-display {
-  margin-left: auto; font-size: 11px; color: #333;
-}
-.balance-display strong { color: #0059b0; }
+.select-field:focus { outline: none; border-color: #2563eb; }
 
-/* テーブルラッパー */
-.table-wrap { flex: 1; overflow: auto; }
+/* ===== テーブル ===== */
+.table-wrap { background: #fff; border: 1px solid #e2e5ea; border-radius: 0 0 12px 12px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: #f8fafc; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; white-space: nowrap; }
+tbody tr { cursor: pointer; transition: background 0.1s; }
+tbody tr:hover { background: #f8fafc; }
+tbody tr.selected { background: #eff6ff; }
+tbody tr:last-child td { border-bottom: none; }
+.num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.balance-col { text-align: right; font-weight: 700; color: #1e40af; }
+.tax-col { font-size: 11px; color: #6b7280; }
+.desc-col { font-size: 12px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-col { font-size: 11px; }
+.inv-col.tekikaku { color: #065f46; font-weight: 700; }
+.inv-col.kubun { color: #92400e; }
+.opening-row td { background: #fafaf7; font-style: italic; color: #6b7280; }
+.total-row td { background: #1e293b; color: #fff; font-weight: 700; border-color: #334155; }
+.total-row td.num { color: #93c5fd; }
+.total-row td.balance-col { color: #6ee7b7; }
+.tax8-stripe { background: #fffbeb !important; }
 
-/* 現金出納帳テーブル */
-.ledger-table {
-  width: 100%; border-collapse: collapse;
-  font-size: 11px;
-  font-family: "MS Gothic","ＭＳ ゴシック","Noto Sans JP",monospace;
-  white-space: nowrap;
-  border-bottom: 2px solid #808080;
+/* ===== ステータスバッジ ===== */
+.status {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap;
 }
-.ledger-table thead tr { background: #336699; }
-.ledger-table thead th {
-  padding: 3px 6px; border: 1px solid #4a7aaa;
-  color: #fff; font-size: 10px; font-weight: 700; text-align: center;
-  position: sticky; top: 0; z-index: 1;
-}
-.ledger-table tbody tr { background: #fff; }
-.ledger-table tbody tr:nth-child(even) { background: #e8f0ff; }
-.ledger-table tbody tr:hover { background: #b8d4ff; cursor: pointer; }
-.ledger-table tbody tr.selected { background: #99c0ff; }
-.ledger-table td {
-  padding: 2px 6px; border: 1px solid #c8c8c8;
-  font-size: 11px; color: #1a1a1a;
-}
-.ledger-table td.num {
-  text-align: right; font-family: "MS Gothic","Courier New",monospace;
-  color: #003366;
-}
-.ledger-table td.balance { text-align: right; color: #003366; font-weight: 700; }
-.ledger-table td.tax-col { text-align: center; font-size: 10px; color: #555; }
-.ledger-table td.inv-col { font-size: 10px; color: #444; text-align: center; }
-.ledger-table td.inv-col.tekikaku { color: #006600; font-weight: 700; }
-.ledger-table td.inv-col.kubun { color: #cc6600; }
-.ledger-table .subtotal-row td {
-  background: #d0e0f5; font-weight: 700;
-  border-top: 2px solid #336699; border-bottom: 2px solid #336699;
-}
-.ledger-table .total-row td {
-  background: #336699; color: #fff; font-weight: 700;
-  border-color: #1a4a7a;
-}
-.ledger-table .total-row td.num { color: #fff; }
+.status-approved { background: #d1fae5; color: #065f46; }
+.status-yayoi    { background: #e0e7ff; color: #3730a3; }
+.status-rejected { background: #fee2e2; color: #991b1b; }
+.status-pending  { background: #fef3c7; color: #92400e; }
 
-/* 前月残高行 */
-.ledger-table .opening-row td {
-  background: #f5f5dc; color: #333; font-style: italic;
-}
-
-/* ===== ステータスバー ===== */
-.statusbar {
-  background: #d4d0c8; border-top: 1px solid #808080;
-  padding: 2px 8px; font-size: 10px; color: #333;
-  display: flex; gap: 20px; align-items: center;
-  flex-shrink: 0;
-}
-.statusbar .sb-sep { width: 1px; height: 14px; background: #808080; }
-
-/* ===== 確認モーダル ===== */
-.confirm-overlay {
+/* ===== モーダル ===== */
+.modal-overlay {
   display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center;
+  background: rgba(15,23,42,0.55); z-index: 100; align-items: center; justify-content: center;
 }
-.confirm-overlay.show { display: flex; }
-.confirm-modal {
-  background: #d4d0c8; border: 2px solid #000;
-  border-top-color: #fff; border-left-color: #fff;
-  width: 560px; max-height: 80vh; display: flex; flex-direction: column;
-  font-family: "MS UI Gothic","Meiryo",sans-serif; font-size: 12px;
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff; border-radius: 16px;
+  width: 96%; max-width: 680px; max-height: 88vh; overflow-y: auto;
+  animation: slideUp 0.25s;
 }
-.confirm-modal-titlebar {
-  background: linear-gradient(180deg, #0059b0 0%, #003c8c 100%);
-  color: #fff; padding: 3px 8px; font-size: 11px; font-weight: 700;
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header {
+  padding: 20px 24px; border-bottom: 1px solid #e2e5ea;
   display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; background: #fff; z-index: 1;
 }
-.confirm-modal-body { padding: 16px; overflow-y: auto; flex: 1; }
-.confirm-modal-body p { margin-bottom: 10px; font-size: 12px; }
-.confirm-summary-table {
-  width: 100%; border-collapse: collapse; font-size: 11px;
-  font-family: "MS Gothic","Courier New",monospace; margin-bottom: 12px;
+.modal-header h3 { font-size: 17px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; padding: 4px; }
+.modal-body { padding: 20px 24px; }
+.modal-body p { margin-bottom: 14px; font-size: 14px; color: #374151; }
+.modal-footer {
+  padding: 16px 24px; border-top: 1px solid #e2e5ea;
+  display: flex; justify-content: flex-end; gap: 8px;
+  position: sticky; bottom: 0; background: #fff;
 }
-.confirm-summary-table th {
-  background: #336699; color: #fff; padding: 3px 6px;
-  border: 1px solid #4a7aaa; text-align: center; font-size: 10px;
-}
-.confirm-summary-table td {
-  padding: 2px 6px; border: 1px solid #c8c8c8; background: #fff;
-}
-.confirm-summary-table td.num { text-align: right; color: #003366; }
-.confirm-tax-summary {
-  background: #f0f0f0; border: 1px inset #ccc;
-  padding: 8px 10px; font-size: 11px; line-height: 1.8;
-}
-.confirm-modal-footer {
-  padding: 10px 16px; display: flex; justify-content: flex-end; gap: 8px;
-  border-top: 1px solid #808080; background: #d4d0c8;
-}
-.win-btn {
-  padding: 4px 16px; background: #d4d0c8; font-size: 12px; font-family: inherit;
-  border: 1px solid #fff; border-bottom-color: #808080; border-right-color: #808080;
-  cursor: pointer; min-width: 80px;
-}
-.win-btn:active {
-  border-top-color: #808080; border-left-color: #808080;
-  border-bottom-color: #fff; border-right-color: #fff;
-}
-.win-btn.primary { background: #0059b0; color: #fff; font-weight: 700; }
-.win-btn.primary:active { background: #003c8c; }
 
-/* ===== 成功通知バー ===== */
-.success-bar {
-  display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 300;
-  background: #006600; color: #fff; padding: 8px 16px;
-  font-size: 12px; font-weight: 700; text-align: center;
-  border-bottom: 2px solid #004400;
+/* モーダル内テーブル */
+.confirm-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
+.confirm-table th {
+  background: #f8fafc; padding: 8px 10px; text-align: left;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #6b7280; border-bottom: 2px solid #e2e5ea;
 }
-.success-bar.show { display: block; }
+.confirm-table td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
+.confirm-table tr:last-child td { border-bottom: none; }
+.confirm-table td.num { text-align: right; font-weight: 600; color: #1e40af; }
 
-/* ===== 印刷 ===== */
-@media print {
-  .titlebar, .menubar, .toolbar, .sidebar, .filter-bar, .statusbar { display: none; }
-  .app-layout { display: block; }
-  .main-area { width: 100%; }
-  .ledger-header { background: #336699 !important; -webkit-print-color-adjust: exact; }
-  .ledger-table thead tr { background: #336699 !important; -webkit-print-color-adjust: exact; }
-  .table-wrap { overflow: visible; }
-  body { background: #fff; }
+/* 税額サマリー */
+.tax-summary-box {
+  background: #f8fafc; border: 1px solid #e2e5ea; border-radius: 10px;
+  padding: 14px 16px; font-size: 13px; line-height: 2;
+}
+.tax-summary-box .total-line { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+
+/* ===== 成功通知トースト ===== */
+.success-toast {
+  display: none; position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+  background: #10b981; color: #fff; padding: 12px 24px;
+  border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 200;
+  box-shadow: 0 8px 24px rgba(16,185,129,0.35);
+  animation: toastIn 0.3s;
+}
+.success-toast.show { display: block; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+@media (max-width: 768px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: 20px; }
 }
 </style>
 </head>
 <body>
 
-<!-- タイトルバー -->
-<div class="titlebar">
-  <span class="titlebar-title">弥生会計 Professional [第28期]（令和08年04月 — 経費精算デモ）</span>
-  <div class="titlebar-btns">
-    <div class="titlebar-btn">_</div>
-    <div class="titlebar-btn">□</div>
-    <div class="titlebar-btn">✕</div>
-  </div>
-</div>
-
-<!-- メニューバー -->
-<div class="menubar">
-  <div class="menu-item">ファイル(F)</div>
-  <div class="menu-item">編集(E)</div>
-  <div class="menu-item">表示(V)</div>
-  <div class="menu-item">帳票(R)</div>
-  <div class="menu-item">集計(S)</div>
-  <div class="menu-item">ツール(T)</div>
-  <div class="menu-item">ヘルプ(H)</div>
-</div>
-
-<!-- ツールバー -->
-<div class="toolbar">
-  <div class="tool-group">
-    <button class="tool-btn" onclick="window.location.href='admin.html'">◀ 精算管理に戻る</button>
-  </div>
-  <div class="tool-group">
-    <button class="tool-btn" id="btn-filter-all" onclick="setFilter('all')">すべての案件</button>
-    <button class="tool-btn" id="btn-filter-approved" onclick="setFilter('approved')">承認済みのみ</button>
-  </div>
-  <div class="tool-sep"></div>
-  <div class="tool-group">
-    <button class="tool-btn primary" id="btn-csv-export">📥 CSV出力</button>
-    <button class="tool-btn" onclick="window.print()">🖨 印刷</button>
-  </div>
-  <div class="tool-sep"></div>
-  <div class="tool-group">
-    <button class="tool-btn" id="btn-register-yayoi" style="background:#006600;color:#fff;border-color:#004400;font-weight:700;">✓ 弥生会計に反映する</button>
-  </div>
-  <div class="tool-sep"></div>
-  <div class="tool-group">
-    <span style="font-size:11px;color:#555;padding:2px 4px;">集計期間：</span>
-    <select class="filter-select" id="period-select" onchange="renderLedger()">
-      <option value="all">全期間</option>
-      <option value="2026-04">2026年4月</option>
-      <option value="2025-10">2025年10月</option>
-      <option value="2025-12">2025年12月</option>
-      <option value="2026-02">2026年2月</option>
-      <option value="2026-03">2026年3月</option>
-    </select>
-    <span style="font-size:11px;color:#555;padding:2px 4px;margin-left:8px;">部門：</span>
-    <select class="filter-select" id="dept-select" onchange="renderLedger()">
-      <option value="all">全部門</option>
-      <option value="制作課">制作課</option>
-      <option value="撮影課">撮影課</option>
-      <option value="企画制作課">企画制作課</option>
-      <option value="管理部">管理部</option>
-    </select>
-  </div>
-</div>
-
-<!-- アプリレイアウト -->
-<div class="app-layout">
-
-  <!-- サイドバー -->
+<div class="layout">
+  <!-- ===== サイドバー ===== -->
   <aside class="sidebar">
-    <div class="sidebar-title">■ 帳簿・仕訳</div>
-    <div class="nav-group">現金・預金</div>
-    <div class="nav-leaf active">現金出納帳</div>
-    <div class="nav-leaf">普通預金出納帳</div>
-    <div class="nav-group">売上・仕入</div>
-    <div class="nav-leaf disabled">売掛帳</div>
-    <div class="nav-leaf disabled">買掛帳</div>
-    <div class="nav-group">仕訳</div>
-    <div class="nav-leaf disabled">仕訳日記帳</div>
-    <div class="nav-leaf disabled">総勘定元帳</div>
-    <div class="nav-group">集計・分析</div>
-    <div class="nav-leaf disabled">残高試算表</div>
-    <div class="nav-leaf disabled">推移表</div>
-    <div class="nav-leaf disabled">部門別集計表</div>
-    <div class="nav-group">決算</div>
-    <div class="nav-leaf disabled">損益計算書</div>
-    <div class="nav-leaf disabled">貸借対照表</div>
-    <div style="margin-top:12px;padding:6px;border-top:1px solid #aaa;">
-      <div style="font-size:10px;color:#555;margin-bottom:4px;">📋 精算管理</div>
-      <div class="nav-leaf" onclick="window.location.href='admin.html'" style="padding-left:6px;">管理画面へ戻る</div>
-      <div class="nav-leaf" onclick="window.location.href='index.html'" style="padding-left:6px;">申請フォームへ</div>
+    <div class="sidebar-logo">
+      <h1>現金出納帳</h1>
+      <span class="demo-tag">弥生会計 第28期</span>
     </div>
+    <div class="nav-item active">💴 現金出納帳</div>
+    <div class="nav-item disabled">📒 普通預金出納帳</div>
+    <div class="nav-item disabled">📊 残高試算表</div>
+    <div class="nav-item disabled">📈 損益計算書</div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="window.location.href='admin.html'">← 精算管理に戻る</div>
+    <div class="nav-item" onclick="window.location.href='index.html'">📝 申請フォームへ</div>
   </aside>
 
-  <!-- メインエリア -->
-  <main class="main-area">
-    <div class="ledger-header">
+  <!-- ===== メイン ===== -->
+  <main class="main">
+    <div class="page-header">
       <div>
-        <div class="ledger-header-title">現金出納帳</div>
-        <div class="ledger-header-sub">勘定科目：現金　部門：全社　税抜表示</div>
+        <h1 class="page-title">現金出納帳</h1>
+        <p class="page-subtitle">第28期（令和07年10月01日〜令和08年09月30日）</p>
       </div>
-      <div style="font-size:10px;text-align:right;">
-        <div id="header-count">—</div>
-        <div id="header-total">支出合計：—</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" id="btn-csv-export">📥 CSV出力</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨 印刷</button>
+        <button class="btn btn-success" id="btn-register-yayoi">✓ 弥生会計に反映する</button>
       </div>
     </div>
 
-    <div class="filter-bar">
-      <span class="filter-label">表示絞込：</span>
+    <!-- サマリーカード -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">前月繰越残高</div>
+        <div class="summary-value">¥696,429</div>
+        <div class="summary-sub">開始残高</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">当期支出合計</div>
+        <div class="summary-value" id="period-expense" style="color:#dc2626;">—</div>
+        <div class="summary-sub" id="header-count">件数：—</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">現在残高</div>
+        <div class="summary-value" id="closing-balance" style="color:#2563eb;">—</div>
+        <div class="summary-sub">前月残高 − 支出</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">伝票数</div>
+        <div class="summary-value" id="sb-count">—</div>
+        <div class="summary-sub" id="header-total">支出合計：—</div>
+      </div>
+    </div>
+
+    <!-- ツールバー -->
+    <div class="toolbar">
       <span class="filter-chip active" id="chip-all" onclick="setGroupView('all')">明細ビュー（全件）</span>
       <span class="filter-chip" id="chip-summary" onclick="setGroupView('summary')">集計ビュー（簡略化）</span>
-      <div style="margin-left:auto; font-size:11px; color:#333;">
-        前月残高：<strong id="opening-balance">¥696,429</strong>
-        当月支出：<strong id="period-expense" style="color:#cc0000;">—</strong>
-        残高：<strong id="closing-balance" style="color:#0059b0;">—</strong>
-      </div>
+      <div class="filter-sep"></div>
+      <button class="btn btn-secondary" id="btn-filter-all" onclick="setFilter('all')" style="padding:6px 14px;font-size:12px;">すべての案件</button>
+      <button class="btn btn-secondary" id="btn-filter-approved" onclick="setFilter('approved')" style="padding:6px 14px;font-size:12px;">承認済みのみ</button>
+      <div class="filter-sep"></div>
+      <span style="font-size:12px;color:#6b7280;">集計期間：</span>
+      <select class="select-field" id="period-select" onchange="renderLedger()">
+        <option value="all">全期間</option>
+        <option value="2026-04">2026年4月</option>
+        <option value="2025-10">2025年10月</option>
+        <option value="2025-12">2025年12月</option>
+        <option value="2026-02">2026年2月</option>
+        <option value="2026-03">2026年3月</option>
+      </select>
+      <span style="font-size:12px;color:#6b7280;">部門：</span>
+      <select class="select-field" id="dept-select" onchange="renderLedger()">
+        <option value="all">全部門</option>
+        <option value="制作課">制作課</option>
+        <option value="撮影課">撮影課</option>
+        <option value="企画制作課">企画制作課</option>
+        <option value="管理部">管理部</option>
+      </select>
     </div>
 
+    <!-- テーブル -->
     <div class="table-wrap">
-      <table class="ledger-table">
+      <table>
         <thead>
           <tr id="table-header-row"></tr>
         </thead>
@@ -390,15 +281,22 @@ body {
   </main>
 </div>
 
-<!-- ステータスバー -->
-<div class="statusbar">
-  <span>弥生会計 Professional</span>
-  <div class="sb-sep"></div>
-  <span>第28期（令和07年10月01日〜令和08年09月30日）</span>
-  <div class="sb-sep"></div>
-  <span id="sb-count">伝票数：—</span>
-  <div class="sb-sep"></div>
-  <span style="margin-left:auto;color:#555;">DEMO — 経費精算AIシステム</span>
+<!-- ===== 成功トースト ===== -->
+<div class="success-toast" id="success-toast"></div>
+
+<!-- ===== 確認モーダル ===== -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>弥生会計への入力確認</h3>
+      <button class="modal-close" onclick="closeConfirmModal()">✕</button>
+    </div>
+    <div class="modal-body" id="confirm-modal-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfirmModal()">キャンセル</button>
+      <button class="btn btn-success" onclick="registerToYayoi()">✓ 弥生会計に反映する</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -415,118 +313,6 @@ function loadData() {
 function saveData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
-
-// ============================================================
-// （削除：ハードコードデータ不要 — admin.html のシードから読む）
-// ============================================================
-// yayoi.html では approved / yayoi_registered のみを表示する
-const DUMMY_REMOVED = [
-  {
-    id: 'EXP-2604-P01',
-    projectName: 'ボートレース イメージ映像制作',
-    ledgerNo: '22po5278-242',
-    applicant: '北村智子',
-    date: '2026-04-13',
-    purpose: '撮影・編集',
-    budget: 300000,
-    settled: 242460,
-    status: 'pending',
-    dept: '撮影課',
-    items: [
-      { category: '会議費',    description: 'ロケハン 昼食代（水野・藤原・林・白銀）計4名',             monthDay: '10/21', amount: 4236,  tax: '10%',   invoice: 'T1234567890101' },
-      { category: '会議費',    description: 'ロケハン 飲料代（水野）計1名',                           monthDay: '10/21', amount: 159,   tax: '8%軽減', invoice: 'T1234567890102' },
-      { category: '会議費',    description: '撮影 撮影用飲料代 計27名',                               monthDay: '10/27', amount: 2210,  tax: '8%軽減', invoice: 'T1234567890103' },
-      { category: '会議費',    description: '撮影 撮影用飲料代（同上）',                              monthDay: '10/27', amount: 1745,  tax: '8%軽減', invoice: 'T1234567890104' },
-      { category: '会議費',    description: '撮影 撮影用飲料代（同上）',                              monthDay: '10/27', amount: 2137,  tax: '8%軽減', invoice: 'T1234567890105' },
-      { category: '会議費',    description: '撮影 前泊夕食代 計4名',                                  monthDay: '10/30', amount: 3695,  tax: '10%',   invoice: 'T1234567890106' },
-      { category: '会議費',    description: '撮影 朝食代 計35名',                                    monthDay: '10/31', amount: 20790, tax: '8%軽減', invoice: 'T1234567890107' },
-      { category: '会議費',    description: '撮影 昼食代 計35名',                                    monthDay: '10/31', amount: 39550, tax: '8%軽減', invoice: 'T1234567890108' },
-      { category: '会議費',    description: '撮影 夕食代 計4名',                                     monthDay: '10/31', amount: 4010,  tax: '10%',   invoice: 'T1234567890109' },
-      { category: '会議費',    description: '撮影 前泊夕食代 計4名',                                  monthDay: '11/30', amount: 4250,  tax: '10%',   invoice: 'T1234567890110' },
-      { category: '会議費',    description: '撮影 翌日朝食代 計4名',                                  monthDay: '11/30', amount: 2631,  tax: '8%軽減', invoice: 'T1234567890111' },
-      { category: '会議費',    description: '撮影 朝食代 計1名',                                     monthDay: '12/1',  amount: 531,   tax: '8%軽減', invoice: 'T1234567890112' },
-      { category: '会議費',    description: '撮影 朝食代 計1名',                                     monthDay: '12/1',  amount: 610,   tax: '8%軽減', invoice: 'T1234567890113' },
-      { category: '会議費',    description: '撮影 昼食代 計33名',                                    monthDay: '12/1',  amount: 36300, tax: '8%軽減', invoice: 'T1234567890114' },
-      { category: '会議費',    description: '撮影 夕食代 計4名',                                     monthDay: '12/1',  amount: 4300,  tax: '10%',   invoice: 'T1234567890115' },
-      { category: '会議費',    description: '撮影 昼食代 計11名',                                    monthDay: '12/22', amount: 9010,  tax: '8%軽減', invoice: 'T1234567890116' },
-      { category: '旅費交通費①', description: '打合せ 駐車場代',                                     monthDay: '10/21', amount: 2000,  tax: '10%',   invoice: '' },
-      { category: '旅費交通費①', description: 'ロケハン 駐車場代',                                   monthDay: '10/21', amount: 550,   tax: '10%',   invoice: 'T1234567890118' },
-      { category: '旅費交通費①', description: '撮影 タクシー代（早朝出発）計1名',                    monthDay: '10/31', amount: 4600,  tax: '10%',   invoice: 'T1234567890123' },
-      { category: '旅費交通費①', description: '撮影 駐車場代（早朝出発）計1名',                      monthDay: '10/31', amount: 1540,  tax: '10%',   invoice: 'T1234567890124' },
-      { category: '旅費交通費①', description: '撮影 駐車場代',                                      monthDay: '11/30', amount: 700,   tax: '10%',   invoice: 'T1234567890125' },
-      { category: '旅費交通費①', description: '撮影 駐車場代',                                      monthDay: '12/22', amount: 400,   tax: '10%',   invoice: '' },
-      { category: '旅費交通費①', description: '撮影 駐車場代',                                      monthDay: '12/22', amount: 400,   tax: '10%',   invoice: '' },
-      { category: '旅費交通費②', description: '撮影 宿泊代 計4名',                                  monthDay: '10/30', amount: 24885, tax: '10%',   invoice: 'T1234567890130' },
-      { category: '旅費交通費②', description: '撮影 宿泊代 計1名',                                  monthDay: '11/30', amount: 5276,  tax: '10%',   invoice: '' },
-      { category: '旅費交通費②', description: '撮影 宿泊代 計4名',                                  monthDay: '11/30', amount: 28000, tax: '10%',   invoice: 'T1234567890132' },
-      { category: '車両費',    description: 'ロケハン 軽油代',                                      monthDay: '10/21', amount: 2199,  tax: '10%',   invoice: 'T1234567890133' },
-      { category: '車両費',    description: '撮影 軽油代',                                          monthDay: '10/31', amount: 3621,  tax: '10%',   invoice: 'T1234567890134' },
-      { category: '車両費',    description: 'ロケハン 軽油代',                                      monthDay: '11/21', amount: 1300,  tax: '10%',   invoice: 'T1234567890135' },
-      { category: '制作諸経費', description: '撮影用備品代（ゴーグル）',                             monthDay: '10/28', amount: 2200,  tax: '10%',   invoice: 'T1234567890136' },
-      { category: '制作諸経費', description: '撮影用備品代（ホワイトボード）',                       monthDay: '10/28', amount: 2200,  tax: '10%',   invoice: 'T1234567890137' },
-      { category: '制作諸経費', description: '撮影用備品代（白・赤布）',                             monthDay: '10/30', amount: 1796,  tax: '10%',   invoice: 'T1234567890138' },
-      { category: '制作諸経費', description: '撮影用備品代（マグネットシート）',                     monthDay: '10/30', amount: 110,   tax: '10%',   invoice: 'T1234567890139' },
-      { category: '制作諸経費', description: '撮影用備品代（タオル・突っ張り棒）',                   monthDay: '10/30', amount: 11744, tax: '10%',   invoice: 'T1234567890140' },
-      { category: '制作諸経費', description: '撮影用備品代（カイロ）',                               monthDay: '11/1',  amount: 1300,  tax: '10%',   invoice: 'T1234567890141' },
-      { category: '制作諸経費', description: '撮影用ケータリング代',                                 monthDay: '11/30', amount: 8695,  tax: '8%軽減', invoice: 'T1234567890142' },
-      { category: '制作諸経費', description: '配送費（トランシーバー返却）',                         monthDay: '12/2',  amount: 1550,  tax: '10%',   invoice: 'T1234567890143' },
-    ]
-  },
-  {
-    id: 'EXP-2604-P02',
-    projectName: '駅伝2024告知ムービー',
-    ledgerNo: '23po5010-002',
-    applicant: '平田',
-    date: '2026-04-05',
-    purpose: '撮影',
-    budget: 250000,
-    settled: 191394,
-    status: 'approved',
-    dept: '撮影課',
-    items: [
-      { category: '会議費',    description: '撮影 夕食代 計4名',                              monthDay: '12/11', amount: 7880,  tax: '10%', invoice: 'T1234567890201' },
-      { category: '会議費',    description: '撮影 朝食代 計1名',                              monthDay: '12/12', amount: 700,   tax: '10%', invoice: 'T1234567890202' },
-      { category: '会議費',    description: '撮影 朝食代 計1名',                              monthDay: '12/12', amount: 700,   tax: '10%', invoice: 'T1234567890203' },
-      { category: '会議費',    description: '撮影 朝食代 計1名',                              monthDay: '12/12', amount: 700,   tax: '10%', invoice: 'T1234567890204' },
-      { category: '会議費',    description: '撮影 朝食代 計1名',                              monthDay: '12/12', amount: 700,   tax: '10%', invoice: 'T1234567890205' },
-      { category: '会議費',    description: '撮影 飲料代 計4名（自販機）',                    monthDay: '12/12', amount: 600,   tax: '10%', invoice: '' },
-      { category: '会議費',    description: '撮影 夕食代 計4名',                              monthDay: '12/12', amount: 7200,  tax: '10%', invoice: 'T1234567890207' },
-      { category: '会議費',    description: '撮影 飲料代 計4名',                              monthDay: '12/12', amount: 1020,  tax: '10%', invoice: 'T1234567890208' },
-      { category: '会議費',    description: '撮影 朝食代 計4名',                              monthDay: '12/13', amount: 3564,  tax: '10%', invoice: 'T1234567890209' },
-      { category: '制作諸経費', description: '撮影 カーフェリー バスタオルレンタル代',          monthDay: '12/11', amount: 800,   tax: '10%', invoice: 'T1234567890210' },
-      { category: '制作諸経費', description: '撮影 カーフェリー バスタオルレンタル代',          monthDay: '12/12', amount: 600,   tax: '10%', invoice: 'T1234567890211' },
-      { category: '制作諸経費', description: '撮影 陸上競技場 撮影使用料',                    monthDay: '12/12', amount: 10420, tax: '10%', invoice: '' },
-      { category: '旅費交通費①', description: '撮影 カーフェリー代 神戸→宮崎 計4名',          monthDay: '12/11', amount: 74170, tax: '10%', invoice: 'T1234567890213' },
-      { category: '旅費交通費①', description: '撮影 カーフェリー代 宮崎→神戸 計4名',          monthDay: '12/12', amount: 74170, tax: '10%', invoice: 'T1234567890214' },
-      { category: '旅費交通費①', description: 'MA 電車代 計1名',                             monthDay: '12/25', amount: 190,   tax: '10%', invoice: '' },
-      { category: '旅費交通費②', description: '撮影 前日入りホテル宿泊 計1名',                monthDay: '12/11', amount: 7980,  tax: '10%', invoice: 'T1234567890216' },
-    ]
-  },
-  {
-    id: 'EXP-2604-P03',
-    projectName: 'ソフトボール部 選手紹介映像2026改訂',
-    ledgerNo: '25po5159-002',
-    applicant: '佐藤 一郎',
-    date: '2026-03-24',
-    purpose: '撮影',
-    budget: 50000,
-    settled: 32256,
-    status: 'rejected',
-    dept: '制作課',
-    items: [
-      { category: '会議費',    description: '軽食費（選手用）',                                monthDay: '2/24', amount: 2371,  tax: '8%軽減', invoice: 'T1234567890301' },
-      { category: '会議費',    description: '飲料費（選手用）',                                monthDay: '2/24', amount: 804,   tax: '8%軽減', invoice: 'T1234567890302' },
-      { category: '会議費',    description: '軽食費 計9名',                                   monthDay: '2/25', amount: 2991,  tax: '8%軽減', invoice: 'T1234567890303' },
-      { category: '会議費',    description: '昼食費 計9名',                                   monthDay: '2/25', amount: 10110, tax: '10%',   invoice: 'T1234567890304' },
-      { category: '会議費',    description: '飲料費（自動販売機）',                            monthDay: '2/25', amount: 2050,  tax: '8%軽減', invoice: '' },
-      { category: '旅費交通費①', description: '駐車場代',                                     monthDay: '2/25', amount: 850,   tax: '10%',   invoice: 'T1234567890306' },
-      { category: '車両費',    description: '制作車レンタカー燃料',                            monthDay: '2/25', amount: 1610,  tax: '10%',   invoice: 'T1234567890307' },
-      { category: '制作諸経費', description: 'USB変換ケーブル',                                monthDay: '2/12', amount: 2970,  tax: '10%',   invoice: 'T1234567890308' },
-      { category: '制作諸経費', description: 'クロスガファーテープ',                           monthDay: '2/19', amount: 8500,  tax: '10%',   invoice: '' },
-    ]
-  }
-];
-// ↑ DUMMY_REMOVED は使用しない（参照禁止）
 
 // ============================================================
 // 科目マッピング（精算書 → 弥生科目）
@@ -553,13 +339,13 @@ const TAX_MAP = {
 
 // ステータスラベル
 const STATUS_LABEL = { pending: '承認待ち', approved: '承認済み', rejected: '差し戻し', yayoi_registered: '弥生登録済' };
+const STATUS_CLASS  = { approved: 'status-approved', yayoi_registered: 'status-yayoi', rejected: 'status-rejected', pending: 'status-pending' };
 
 // ============================================================
 // 状態
 // ============================================================
 let currentFilter = 'all';
 let currentGroupView = 'all';
-let selectedRow = null;
 const OPENING_BALANCE = 696429;
 
 // ============================================================
@@ -572,13 +358,7 @@ function aggregateItems(projects) {
       const hasInvoice = it.invoice ? 'あり' : 'なし';
       const key = `${p.id}|${it.category}|${it.tax}|${hasInvoice}`;
       if (!groups.has(key)) {
-        groups.set(key, {
-          project: p,
-          category: it.category,
-          tax: it.tax,
-          hasInvoice,
-          items: [],
-        });
+        groups.set(key, { project: p, category: it.category, tax: it.tax, hasInvoice, items: [] });
       }
       groups.get(key).items.push(it);
     });
@@ -595,7 +375,6 @@ function aggregateItems(projects) {
       ? (dates[0] === dates[dates.length-1] ? dates[0] : `${dates[0]}〜${dates[dates.length-1]}`)
       : '—';
 
-    // 摘要：日付 内容（案件名 帳合No.）/申請者名
     const contentDesc = g.category === '旅費交通費②' ? '宿泊代'
       : g.category === '旅費交通費①' ? '交通費'
       : g.category === '会議費'       ? '飲食代'
@@ -603,23 +382,14 @@ function aggregateItems(projects) {
       : g.category === '制作諸経費'   ? '制作諸経費'
       : g.category;
     const summary = `${dateRange}${contentDesc}（${p.projectName} ${p.ledgerNo}）/${p.applicant}`;
-
-    const invoice = g.hasInvoice === 'あり' ? '適格' : '区分記載';
+    const invoice   = g.hasInvoice === 'あり' ? '適格' : '区分記載';
     const deduction = g.hasInvoice === 'あり' ? '100%' : '80%経過措置';
 
     rows.push({
-      project: p,
-      category: g.category,
+      project: p, category: g.category,
       yayoiSubj: CATEGORY_MAP[g.category] || g.category,
-      tax: g.tax,
-      taxKubun: taxInfo.kubun,
-      taxKeisan: taxInfo.keisan,
-      taxAmt,
-      total,
-      dateRange,
-      summary,
-      invoice,
-      deduction,
+      tax: g.tax, taxKubun: taxInfo.kubun, taxKeisan: taxInfo.keisan,
+      taxAmt, total, dateRange, summary, invoice, deduction,
       itemCount: g.items.length,
     });
   });
@@ -631,15 +401,21 @@ function aggregateItems(projects) {
 // ============================================================
 function setFilter(f) {
   currentFilter = f;
-  document.getElementById('btn-filter-all').style.background     = f === 'all'      ? '#b8d4ff' : '';
-  document.getElementById('btn-filter-approved').style.background = f === 'approved' ? '#b8d4ff' : '';
+  const btnAll      = document.getElementById('btn-filter-all');
+  const btnApproved = document.getElementById('btn-filter-approved');
+  btnAll.style.background      = f === 'all'      ? '#dbeafe' : '';
+  btnAll.style.color           = f === 'all'      ? '#1e40af' : '';
+  btnAll.style.borderColor     = f === 'all'      ? '#93c5fd' : '';
+  btnApproved.style.background = f === 'approved' ? '#dbeafe' : '';
+  btnApproved.style.color      = f === 'approved' ? '#1e40af' : '';
+  btnApproved.style.borderColor= f === 'approved' ? '#93c5fd' : '';
   renderLedger();
 }
 
 function setGroupView(v) {
   currentGroupView = v;
-  document.getElementById('chip-all').classList.toggle('active',     v === 'all');
-  document.getElementById('chip-summary').classList.toggle('active',  v === 'summary');
+  document.getElementById('chip-all').classList.toggle('active',    v === 'all');
+  document.getElementById('chip-summary').classList.toggle('active', v === 'summary');
   renderLedger();
 }
 
@@ -657,48 +433,39 @@ function getFilteredProjects() {
 function renderLedger() {
   const projects = getFilteredProjects();
 
-  // ヘッダー列
   const headerRow = document.getElementById('table-header-row');
   headerRow.innerHTML = `
-    <th style="width:36px;">伝票No.</th>
-    <th style="width:60px;">部門</th>
-    <th style="width:110px;">相手勘定科目</th>
-    <th style="width:105px;">税区分</th>
-    <th style="width:7px;"></th>
-    <th style="width:75px;">支出金額</th>
-    <th style="width:60px;">貸方税額</th>
-    <th style="width:80px;">残高</th>
+    <th style="width:44px;text-align:center;">No.</th>
+    <th style="width:64px;">部門</th>
+    <th style="width:120px;">相手勘定科目</th>
+    <th style="width:130px;">税区分</th>
+    <th style="width:88px;" class="num">支出金額</th>
+    <th style="width:72px;" class="num">貸方税額</th>
+    <th style="width:96px;" class="num">残高</th>
     <th>摘要</th>
-    <th style="width:62px;">請求書区分</th>
-    <th style="width:75px;">仕入控除</th>
-    <th style="width:48px;">状態</th>
+    <th style="width:68px;">請求書区分</th>
+    <th style="width:80px;">仕入控除</th>
+    <th style="width:76px;">状態</th>
   `;
 
   const tbody = document.getElementById('ledger-body');
   let rows = [];
 
   if (currentGroupView === 'summary') {
-    // 集計ビュー（精算明細書簡略化相当）
     rows = aggregateItems(projects);
   } else {
-    // 明細ビュー（全件）
     projects.forEach(p => {
       p.items.forEach(it => {
         const taxInfo = TAX_MAP[it.tax] || TAX_MAP['10%'];
-        const taxAmt = Math.round((it.amount || 0) * taxInfo.rate);
-        const hasInv = it.invoice ? 'あり' : 'なし';
+        const taxAmt  = Math.round((it.amount || 0) * taxInfo.rate);
+        const hasInv  = it.invoice ? 'あり' : 'なし';
         rows.push({
-          project: p,
-          category: it.category,
+          project: p, category: it.category,
           yayoiSubj: CATEGORY_MAP[it.category] || it.category,
-          tax: it.tax,
-          taxKubun: taxInfo.kubun,
-          taxKeisan: taxInfo.keisan,
-          taxAmt,
-          total: it.amount || 0,
-          dateRange: it.monthDay || '—',
+          tax: it.tax, taxKubun: taxInfo.kubun, taxKeisan: taxInfo.keisan,
+          taxAmt, total: it.amount || 0, dateRange: it.monthDay || '—',
           summary: `${it.monthDay || ''}${it.description}（${p.projectName} ${p.ledgerNo}）/${p.applicant}`,
-          invoice: hasInv === 'あり' ? '適格' : '区分記載',
+          invoice:   hasInv === 'あり' ? '適格' : '区分記載',
           deduction: hasInv === 'あり' ? '100%' : '80%経過措置',
           itemCount: 1,
         });
@@ -709,69 +476,60 @@ function renderLedger() {
   const totalExpense = rows.reduce((s, r) => s + r.total, 0);
   let balance = OPENING_BALANCE;
 
-  // ステータス更新
-  document.getElementById('header-count').textContent = `件数：${rows.length}件`;
-  document.getElementById('header-total').textContent = `支出合計：¥${totalExpense.toLocaleString()}`;
-  document.getElementById('sb-count').textContent = `伝票数：${rows.length}件`;
+  document.getElementById('header-count').textContent  = `件数：${rows.length}件`;
+  document.getElementById('header-total').textContent  = `支出合計：¥${totalExpense.toLocaleString()}`;
+  document.getElementById('sb-count').textContent      = `${rows.length}件`;
   document.getElementById('period-expense').textContent = `¥${totalExpense.toLocaleString()}`;
   document.getElementById('closing-balance').textContent = `¥${(OPENING_BALANCE - totalExpense).toLocaleString()}`;
 
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:20px;color:#888;">表示するデータがありません</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:32px;color:#6b7280;">表示するデータがありません<br><span style="font-size:12px;">管理画面で案件を承認するとここに表示されます</span></td></tr>`;
     return;
   }
 
   // 前月残高行
   let html = `<tr class="opening-row">
-    <td style="text-align:center;">—</td>
+    <td style="text-align:center;font-size:12px;">—</td>
     <td></td>
-    <td colspan="3" style="font-style:italic;color:#555;">前月繰越</td>
-    <td class="num"></td>
-    <td class="num"></td>
-    <td class="balance">¥${OPENING_BALANCE.toLocaleString()}</td>
-    <td colspan="4" style="color:#888;font-size:10px;">前期繰越残高</td>
+    <td colspan="2" style="color:#6b7280;">前月繰越</td>
+    <td class="num"></td><td class="num"></td>
+    <td class="balance-col">¥${OPENING_BALANCE.toLocaleString()}</td>
+    <td colspan="4" style="color:#9ca3af;font-size:11px;">前期繰越残高</td>
   </tr>`;
 
   rows.forEach((r, i) => {
     balance -= r.total;
-    const statusBadge = r.project.status === 'yayoi_registered'
-      ? `<span style="color:#3730a3;font-weight:700;">登録済</span>`
-      : r.project.status === 'approved'
-      ? `<span style="color:#006600;font-weight:700;">承認</span>`
-      : `<span style="color:#cc0000;">差戻</span>`;
+    const statusBadge = `<span class="status ${STATUS_CLASS[r.project.status] || 'status-pending'}">${STATUS_LABEL[r.project.status] || r.project.status}</span>`;
+    const invClass    = r.invoice === '適格' ? 'tekikaku' : 'kubun';
+    const is8k        = r.tax === '8%軽減';
 
-    const invClass = r.invoice === '適格' ? 'tekikaku' : 'kubun';
-
-    html += `<tr data-idx="${i}">
-      <td style="text-align:center;">${i + 1}</td>
-      <td style="font-size:10px;">${r.project.dept}</td>
-      <td>${r.yayoiSubj}</td>
+    html += `<tr data-idx="${i}"${is8k ? ' class="tax8-stripe"' : ''}>
+      <td style="text-align:center;font-size:12px;color:#6b7280;">${i + 1}</td>
+      <td style="font-size:11px;color:#6b7280;">${r.project.dept || '—'}</td>
+      <td style="font-size:12px;">${r.yayoiSubj}</td>
       <td class="tax-col">${r.taxKubun} / ${r.taxKeisan}</td>
-      <td style="width:7px;padding:0;background:${r.tax === '8%軽減' ? '#fffacc' : '#fff'};"></td>
       <td class="num">¥${r.total.toLocaleString()}</td>
-      <td class="num" style="font-size:10px;">¥${r.taxAmt.toLocaleString()}</td>
-      <td class="balance">¥${balance.toLocaleString()}</td>
-      <td style="font-size:10px;max-width:300px;overflow:hidden;text-overflow:ellipsis;">${r.summary}</td>
+      <td class="num" style="color:#6b7280;font-size:12px;">¥${r.taxAmt.toLocaleString()}</td>
+      <td class="balance-col">¥${balance.toLocaleString()}</td>
+      <td class="desc-col" title="${r.summary}">${r.summary}</td>
       <td class="inv-col ${invClass}">${r.invoice}</td>
-      <td class="inv-col" style="font-size:10px;">${r.deduction}</td>
-      <td style="text-align:center;">${statusBadge}</td>
+      <td class="inv-col" style="font-size:11px;">${r.deduction}</td>
+      <td>${statusBadge}</td>
     </tr>`;
   });
 
   // 合計行
   const totalTax = rows.reduce((s, r) => s + r.taxAmt, 0);
   html += `<tr class="total-row">
-    <td colspan="4" style="text-align:center;font-size:11px;">合　　　計</td>
-    <td></td>
+    <td colspan="4" style="text-align:center;letter-spacing:0.1em;">合　計</td>
     <td class="num">¥${totalExpense.toLocaleString()}</td>
     <td class="num">¥${totalTax.toLocaleString()}</td>
-    <td class="num">¥${(OPENING_BALANCE - totalExpense).toLocaleString()}</td>
+    <td class="balance-col">¥${(OPENING_BALANCE - totalExpense).toLocaleString()}</td>
     <td colspan="4"></td>
   </tr>`;
 
   tbody.innerHTML = html;
 
-  // 行クリック
   tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
     tr.addEventListener('click', () => {
       tbody.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
@@ -791,15 +549,15 @@ document.getElementById('btn-csv-export').addEventListener('click', () => {
         const r = [];
         projects.forEach(p => p.items.forEach(it => {
           const taxInfo = TAX_MAP[it.tax] || TAX_MAP['10%'];
-          const taxAmt = Math.round((it.amount||0) * taxInfo.rate);
-          const hasInv = it.invoice ? 'あり' : 'なし';
+          const taxAmt  = Math.round((it.amount||0) * taxInfo.rate);
+          const hasInv  = it.invoice ? 'あり' : 'なし';
           r.push({
             project: p, category: it.category,
             yayoiSubj: CATEGORY_MAP[it.category] || it.category,
             tax: it.tax, taxKubun: taxInfo.kubun, taxKeisan: taxInfo.keisan,
             taxAmt, total: it.amount||0, dateRange: it.monthDay||'',
             summary: `${it.monthDay||''}${it.description}（${p.projectName} ${p.ledgerNo}）/${p.applicant}`,
-            invoice: hasInv === 'あり' ? '適格' : '区分記載',
+            invoice:   hasInv === 'あり' ? '適格' : '区分記載',
             deduction: hasInv === 'あり' ? '100%' : '80%経過措置',
           });
         }));
@@ -830,35 +588,37 @@ function showConfirmModal() {
     alert('弥生会計に反映する承認済み案件がありません。\n管理画面で案件を承認してください。');
     return;
   }
-  const rows = aggregateItems(approvedProjects);
+  const rows        = aggregateItems(approvedProjects);
   const totalExpense = rows.reduce((s, r) => s + r.total, 0);
-  const tax10  = rows.filter(r => r.tax === '10%').reduce((s, r) => s + r.taxAmt, 0);
-  const tax8   = rows.filter(r => r.tax === '8%軽減').reduce((s, r) => s + r.taxAmt, 0);
+  const tax10       = rows.filter(r => r.tax === '10%').reduce((s, r) => s + r.taxAmt, 0);
+  const tax8        = rows.filter(r => r.tax === '8%軽減').reduce((s, r) => s + r.taxAmt, 0);
 
   const tableHtml = rows.map((r, i) => `
     <tr>
-      <td style="text-align:center;">${i+1}</td>
+      <td style="text-align:center;color:#6b7280;">${i+1}</td>
       <td>${r.yayoiSubj}</td>
       <td class="num">¥${r.total.toLocaleString()}</td>
-      <td class="num" style="font-size:10px;">¥${r.taxAmt.toLocaleString()}</td>
-      <td style="font-size:10px;">${r.taxKubun}</td>
-      <td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${r.summary}</td>
+      <td class="num">¥${r.taxAmt.toLocaleString()}</td>
+      <td style="font-size:11px;color:#6b7280;">${r.taxKubun}</td>
+      <td style="font-size:11px;color:#6b7280;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${r.summary}</td>
     </tr>
   `).join('');
 
   document.getElementById('confirm-modal-content').innerHTML = `
     <p>以下の <strong>${approvedProjects.length}件</strong> の案件（<strong>${rows.length}行</strong>）を弥生会計（現金出納帳）に反映します。</p>
-    <table class="confirm-summary-table">
+    <table class="confirm-table">
       <thead><tr>
         <th style="width:32px;">No.</th><th>科目</th>
-        <th style="width:80px;">支出金額</th><th style="width:68px;">貸方税額</th>
+        <th style="width:88px;">支出金額</th><th style="width:72px;">貸方税額</th>
         <th style="width:110px;">税区分</th><th>摘要</th>
       </tr></thead>
       <tbody>${tableHtml}</tbody>
     </table>
-    <div class="confirm-tax-summary">
-      合計支出金額：<strong>¥${totalExpense.toLocaleString()}</strong><br>
-      うち消費税10%：¥${tax10.toLocaleString()}　／　うち消費税8%軽減：¥${tax8.toLocaleString()}
+    <div class="tax-summary-box">
+      <div class="total-line">合計支出金額：¥${totalExpense.toLocaleString()}</div>
+      <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+        うち消費税10%：¥${tax10.toLocaleString()}　／　うち消費税8%軽減：¥${tax8.toLocaleString()}
+      </div>
     </div>
   `;
   document.getElementById('confirm-overlay').classList.add('show');
@@ -869,20 +629,24 @@ function closeConfirmModal() {
 }
 
 function registerToYayoi() {
-  const data = loadData();
+  const data    = loadData();
   const targets = data.projects.filter(p => p.status === 'approved');
   targets.forEach(p => { p.status = 'yayoi_registered'; });
   data.lastYayoiAt = new Date().toISOString();
   saveData(data);
   closeConfirmModal();
-  const bar = document.getElementById('success-bar');
-  bar.textContent = `${targets.length}件を弥生会計（現金出納帳）に反映しました（${new Date().toLocaleString('ja-JP')}）`;
-  bar.classList.add('show');
-  setTimeout(() => bar.classList.remove('show'), 5000);
+
+  const toast = document.getElementById('success-toast');
+  toast.textContent = `✓ ${targets.length}件を弥生会計（現金出納帳）に反映しました（${new Date().toLocaleString('ja-JP')}）`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 5000);
   renderLedger();
 }
 
 document.getElementById('btn-register-yayoi').addEventListener('click', showConfirmModal);
+document.getElementById('confirm-overlay').addEventListener('click', e => {
+  if (e.target.id === 'confirm-overlay') closeConfirmModal();
+});
 
 // ============================================================
 // 初期描画
@@ -890,24 +654,5 @@ document.getElementById('btn-register-yayoi').addEventListener('click', showConf
 setFilter('all');
 renderLedger();
 </script>
-
-<!-- 成功通知バー -->
-<div class="success-bar" id="success-bar"></div>
-
-<!-- 確認モーダル -->
-<div class="confirm-overlay" id="confirm-overlay">
-  <div class="confirm-modal">
-    <div class="confirm-modal-titlebar">
-      <span>弥生会計への入力確認</span>
-      <button class="titlebar-btn" onclick="closeConfirmModal()">✕</button>
-    </div>
-    <div class="confirm-modal-body" id="confirm-modal-content"></div>
-    <div class="confirm-modal-footer">
-      <button class="win-btn" onclick="closeConfirmModal()">キャンセル</button>
-      <button class="win-btn primary" onclick="registerToYayoi()">✓ 弥生会計に反映する</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弥生会計 Professional [第28期] - 現金出納帳</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "MS UI Gothic","Meiryo","メイリオ","Noto Sans JP",sans-serif;
+  font-size: 12px; color: #1a1a1a; background: #d4d0c8;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+
+/* ===== タイトルバー ===== */
+.titlebar {
+  background: linear-gradient(180deg, #0059b0 0%, #003c8c 100%);
+  color: #fff; padding: 3px 8px; font-size: 11px;
+  display: flex; align-items: center; justify-content: space-between;
+  user-select: none;
+}
+.titlebar-title { font-weight: 700; }
+.titlebar-btns { display: flex; gap: 2px; }
+.titlebar-btn {
+  width: 16px; height: 14px; background: #d4d0c8; border: 1px solid #888;
+  border-top-color: #fff; border-left-color: #fff;
+  font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+/* ===== メニューバー ===== */
+.menubar {
+  background: #d4d0c8; border-bottom: 1px solid #808080;
+  padding: 2px 4px; display: flex; gap: 0; user-select: none;
+}
+.menu-item {
+  padding: 2px 8px; font-size: 12px; cursor: pointer;
+  border: 1px solid transparent; border-radius: 2px;
+}
+.menu-item:hover { background: #0059b0; color: #fff; border-color: #0059b0; }
+.menu-item.disabled { color: #888; cursor: default; }
+.menu-item.disabled:hover { background: transparent; color: #888; border-color: transparent; }
+
+/* ===== ツールバー ===== */
+.toolbar {
+  background: #d4d0c8; border-bottom: 2px solid #808080;
+  padding: 3px 4px; display: flex; gap: 4px; align-items: center;
+  flex-wrap: wrap;
+}
+.tool-group { display: flex; gap: 2px; padding: 0 4px; border-right: 1px solid #888; }
+.tool-group:last-child { border-right: none; }
+.tool-btn {
+  padding: 2px 8px; background: #d4d0c8;
+  border: 1px solid transparent;
+  border-top-color: #fff; border-left-color: #fff;
+  border-bottom-color: #808080; border-right-color: #808080;
+  font-size: 11px; font-family: inherit; cursor: pointer;
+  white-space: nowrap;
+}
+.tool-btn:hover { background: #e8e4e0; }
+.tool-btn:active {
+  border-top-color: #808080; border-left-color: #808080;
+  border-bottom-color: #fff; border-right-color: #fff;
+}
+.tool-btn.primary { background: #0059b0; color: #fff; border-color: #003c8c; }
+.tool-btn.primary:hover { background: #0070d0; }
+.tool-sep { width: 1px; background: #808080; height: 20px; margin: 0 2px; }
+
+/* ===== レイアウト ===== */
+.app-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+/* ===== サイドバー ===== */
+.sidebar {
+  width: 160px; flex-shrink: 0;
+  background: #d4d0c8; border-right: 2px solid #808080;
+  overflow-y: auto;
+}
+.sidebar-title {
+  background: #0059b0; color: #fff;
+  padding: 3px 6px; font-size: 11px; font-weight: 700;
+}
+.nav-group {
+  padding: 4px 6px 2px; font-size: 10px; font-weight: 700; color: #444;
+  text-transform: uppercase; letter-spacing: 0.03em;
+  border-top: 1px solid #b0b0b0; margin-top: 4px;
+}
+.nav-group:first-of-type { margin-top: 0; border-top: none; }
+.nav-leaf {
+  padding: 3px 6px 3px 14px; font-size: 11px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.nav-leaf:hover { background: #b8d4ff; }
+.nav-leaf.active {
+  background: #0059b0; color: #fff;
+  border: 1px solid #003c8c;
+}
+
+/* ===== メインエリア ===== */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* 帳票ヘッダー */
+.ledger-header {
+  background: #0059b0; color: #fff;
+  padding: 4px 10px; display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.ledger-header-title { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
+.ledger-header-sub { font-size: 10px; opacity: 0.85; }
+
+/* 検索・フィルタバー */
+.filter-bar {
+  background: #e8e4e0; border-bottom: 1px solid #b0b0b0;
+  padding: 4px 8px; display: flex; gap: 8px; align-items: center;
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.filter-label { font-size: 11px; color: #333; font-weight: 700; white-space: nowrap; }
+.filter-select {
+  padding: 1px 4px; font-size: 11px; font-family: inherit;
+  border: 1px solid #808080;
+  border-top-color: #404040; border-left-color: #404040;
+  background: #fff;
+}
+.filter-chip {
+  padding: 1px 8px; font-size: 11px; cursor: pointer;
+  background: #d4d0c8;
+  border: 1px solid #fff; border-bottom-color: #808080; border-right-color: #808080;
+}
+.filter-chip.active {
+  background: #fff; border-color: #808080;
+  border-top-color: #404040; border-left-color: #404040;
+}
+.balance-display {
+  margin-left: auto; font-size: 11px; color: #333;
+}
+.balance-display strong { color: #0059b0; }
+
+/* テーブルラッパー */
+.table-wrap { flex: 1; overflow: auto; }
+
+/* 現金出納帳テーブル */
+.ledger-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 11px;
+  font-family: "MS Gothic","ＭＳ ゴシック","Noto Sans JP",monospace;
+  white-space: nowrap;
+  border-bottom: 2px solid #808080;
+}
+.ledger-table thead tr { background: #336699; }
+.ledger-table thead th {
+  padding: 3px 6px; border: 1px solid #4a7aaa;
+  color: #fff; font-size: 10px; font-weight: 700; text-align: center;
+  position: sticky; top: 0; z-index: 1;
+}
+.ledger-table tbody tr { background: #fff; }
+.ledger-table tbody tr:nth-child(even) { background: #e8f0ff; }
+.ledger-table tbody tr:hover { background: #b8d4ff; cursor: pointer; }
+.ledger-table tbody tr.selected { background: #99c0ff; }
+.ledger-table td {
+  padding: 2px 6px; border: 1px solid #c8c8c8;
+  font-size: 11px; color: #1a1a1a;
+}
+.ledger-table td.num {
+  text-align: right; font-family: "MS Gothic","Courier New",monospace;
+  color: #003366;
+}
+.ledger-table td.balance { text-align: right; color: #003366; font-weight: 700; }
+.ledger-table td.tax-col { text-align: center; font-size: 10px; color: #555; }
+.ledger-table td.inv-col { font-size: 10px; color: #444; text-align: center; }
+.ledger-table td.inv-col.tekikaku { color: #006600; font-weight: 700; }
+.ledger-table td.inv-col.kubun { color: #cc6600; }
+.ledger-table .subtotal-row td {
+  background: #d0e0f5; font-weight: 700;
+  border-top: 2px solid #336699; border-bottom: 2px solid #336699;
+}
+.ledger-table .total-row td {
+  background: #336699; color: #fff; font-weight: 700;
+  border-color: #1a4a7a;
+}
+.ledger-table .total-row td.num { color: #fff; }
+
+/* 前月残高行 */
+.ledger-table .opening-row td {
+  background: #f5f5dc; color: #333; font-style: italic;
+}
+
+/* ===== ステータスバー ===== */
+.statusbar {
+  background: #d4d0c8; border-top: 1px solid #808080;
+  padding: 2px 8px; font-size: 10px; color: #333;
+  display: flex; gap: 20px; align-items: center;
+  flex-shrink: 0;
+}
+.statusbar .sb-sep { width: 1px; height: 14px; background: #808080; }
+
+/* ===== 印刷 ===== */
+@media print {
+  .titlebar, .menubar, .toolbar, .sidebar, .filter-bar, .statusbar { display: none; }
+  .app-layout { display: block; }
+  .main-area { width: 100%; }
+  .ledger-header { background: #336699 !important; -webkit-print-color-adjust: exact; }
+  .ledger-table thead tr { background: #336699 !important; -webkit-print-color-adjust: exact; }
+  .table-wrap { overflow: visible; }
+  body { background: #fff; }
+}
+</style>
+</head>
+<body>
+
+<!-- タイトルバー -->
+<div class="titlebar">
+  <span class="titlebar-title">弥生会計 Professional [第28期]（令和08年04月 — 経費精算デモ）</span>
+  <div class="titlebar-btns">
+    <div class="titlebar-btn">_</div>
+    <div class="titlebar-btn">□</div>
+    <div class="titlebar-btn">✕</div>
+  </div>
+</div>
+
+<!-- メニューバー -->
+<div class="menubar">
+  <div class="menu-item">ファイル(F)</div>
+  <div class="menu-item">編集(E)</div>
+  <div class="menu-item">表示(V)</div>
+  <div class="menu-item">帳票(R)</div>
+  <div class="menu-item">集計(S)</div>
+  <div class="menu-item">ツール(T)</div>
+  <div class="menu-item">ヘルプ(H)</div>
+</div>
+
+<!-- ツールバー -->
+<div class="toolbar">
+  <div class="tool-group">
+    <button class="tool-btn" onclick="window.location.href='admin.html'">◀ 精算管理に戻る</button>
+  </div>
+  <div class="tool-group">
+    <button class="tool-btn" id="btn-filter-all" onclick="setFilter('all')">すべての案件</button>
+    <button class="tool-btn" id="btn-filter-approved" onclick="setFilter('approved')">承認済みのみ</button>
+  </div>
+  <div class="tool-sep"></div>
+  <div class="tool-group">
+    <button class="tool-btn primary" id="btn-csv-export">📥 CSV出力</button>
+    <button class="tool-btn" onclick="window.print()">🖨 印刷</button>
+  </div>
+  <div class="tool-sep"></div>
+  <div class="tool-group">
+    <span style="font-size:11px;color:#555;padding:2px 4px;">集計期間：</span>
+    <select class="filter-select" id="period-select" onchange="renderLedger()">
+      <option value="all">全期間</option>
+      <option value="2026-04">2026年4月</option>
+      <option value="2025-10">2025年10月</option>
+      <option value="2025-12">2025年12月</option>
+      <option value="2026-02">2026年2月</option>
+      <option value="2026-03">2026年3月</option>
+    </select>
+    <span style="font-size:11px;color:#555;padding:2px 4px;margin-left:8px;">部門：</span>
+    <select class="filter-select" id="dept-select" onchange="renderLedger()">
+      <option value="all">全部門</option>
+      <option value="制作課">制作課</option>
+      <option value="撮影課">撮影課</option>
+      <option value="企画制作課">企画制作課</option>
+      <option value="管理部">管理部</option>
+    </select>
+  </div>
+</div>
+
+<!-- アプリレイアウト -->
+<div class="app-layout">
+
+  <!-- サイドバー -->
+  <aside class="sidebar">
+    <div class="sidebar-title">■ 帳簿・仕訳</div>
+    <div class="nav-group">現金・預金</div>
+    <div class="nav-leaf active">現金出納帳</div>
+    <div class="nav-leaf">普通預金出納帳</div>
+    <div class="nav-group">売上・仕入</div>
+    <div class="nav-leaf disabled">売掛帳</div>
+    <div class="nav-leaf disabled">買掛帳</div>
+    <div class="nav-group">仕訳</div>
+    <div class="nav-leaf disabled">仕訳日記帳</div>
+    <div class="nav-leaf disabled">総勘定元帳</div>
+    <div class="nav-group">集計・分析</div>
+    <div class="nav-leaf disabled">残高試算表</div>
+    <div class="nav-leaf disabled">推移表</div>
+    <div class="nav-leaf disabled">部門別集計表</div>
+    <div class="nav-group">決算</div>
+    <div class="nav-leaf disabled">損益計算書</div>
+    <div class="nav-leaf disabled">貸借対照表</div>
+    <div style="margin-top:12px;padding:6px;border-top:1px solid #aaa;">
+      <div style="font-size:10px;color:#555;margin-bottom:4px;">📋 精算管理</div>
+      <div class="nav-leaf" onclick="window.location.href='admin.html'" style="padding-left:6px;">管理画面へ戻る</div>
+      <div class="nav-leaf" onclick="window.location.href='index.html'" style="padding-left:6px;">申請フォームへ</div>
+    </div>
+  </aside>
+
+  <!-- メインエリア -->
+  <main class="main-area">
+    <div class="ledger-header">
+      <div>
+        <div class="ledger-header-title">現金出納帳</div>
+        <div class="ledger-header-sub">勘定科目：現金　部門：全社　税抜表示</div>
+      </div>
+      <div style="font-size:10px;text-align:right;">
+        <div id="header-count">—</div>
+        <div id="header-total">支出合計：—</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">表示絞込：</span>
+      <span class="filter-chip active" id="chip-all" onclick="setGroupView('all')">明細ビュー（全件）</span>
+      <span class="filter-chip" id="chip-summary" onclick="setGroupView('summary')">集計ビュー（簡略化）</span>
+      <div style="margin-left:auto; font-size:11px; color:#333;">
+        前月残高：<strong id="opening-balance">¥696,429</strong>
+        当月支出：<strong id="period-expense" style="color:#cc0000;">—</strong>
+        残高：<strong id="closing-balance" style="color:#0059b0;">—</strong>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="ledger-table">
+        <thead>
+          <tr id="table-header-row"></tr>
+        </thead>
+        <tbody id="ledger-body"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- ステータスバー -->
+<div class="statusbar">
+  <span>弥生会計 Professional</span>
+  <div class="sb-sep"></div>
+  <span>第28期（令和07年10月01日〜令和08年09月30日）</span>
+  <div class="sb-sep"></div>
+  <span id="sb-count">伝票数：—</span>
+  <div class="sb-sep"></div>
+  <span style="margin-left:auto;color:#555;">DEMO — 経費精算AIシステム</span>
+</div>
+
+<script>
+// ============================================================
+// ★ データを入れる場所はここです ★
+// admin.html と同じ dummyProjects を使います。
+// ============================================================
+const dummyProjects = [
+  {
+    id: 'EXP-2604-P01',
+    projectName: 'ボートレース イメージ映像制作',
+    ledgerNo: '22po5278-242',
+    applicant: '北村智子',
+    date: '2026-04-13',
+    purpose: '撮影・編集',
+    budget: 300000,
+    settled: 242460,
+    status: 'pending',
+    dept: '撮影課',
+    items: [
+      { category: '会議費',    description: 'ロケハン 昼食代（水野・藤原・林・白銀）計4名',             monthDay: '10/21', amount: 4236,  tax: '10%',   invoice: 'T1234567890101' },
+      { category: '会議費',    description: 'ロケハン 飲料代（水野）計1名',                           monthDay: '10/21', amount: 159,   tax: '8%軽減', invoice: 'T1234567890102' },
+      { category: '会議費',    description: '撮影 撮影用飲料代 計27名',                               monthDay: '10/27', amount: 2210,  tax: '8%軽減', invoice: 'T1234567890103' },
+      { category: '会議費',    description: '撮影 撮影用飲料代（同上）',                              monthDay: '10/27', amount: 1745,  tax: '8%軽減', invoice: 'T1234567890104' },
+      { category: '会議費',    description: '撮影 撮影用飲料代（同上）',                              monthDay: '10/27', amount: 2137,  tax: '8%軽減', invoice: 'T1234567890105' },
+      { category: '会議費',    description: '撮影 前泊夕食代 計4名',                                  monthDay: '10/30', amount: 3695,  tax: '10%',   invoice: 'T1234567890106' },
+      { category: '会議費',    description: '撮影 朝食代 計35名',                                    monthDay: '10/31', amount: 20790, tax: '8%軽減', invoice: 'T1234567890107' },
+      { category: '会議費',    description: '撮影 昼食代 計35名',                                    monthDay: '10/31', amount: 39550, tax: '8%軽減', invoice: 'T1234567890108' },
+      { category: '会議費',    description: '撮影 夕食代 計4名',                                     monthDay: '10/31', amount: 4010,  tax: '10%',   invoice: 'T1234567890109' },
+      { category: '会議費',    description: '撮影 前泊夕食代 計4名',                                  monthDay: '11/30', amount: 4250,  tax: '10%',   invoice: 'T1234567890110' },
+      { category: '会議費',    description: '撮影 翌日朝食代 計4名',                                  monthDay: '11/30', amount: 2631,  tax: '8%軽減', invoice: 'T1234567890111' },
+      { category: '会議費',    description: '撮影 朝食代 計1名',                                     monthDay: '12/1',  amount: 531,   tax: '8%軽減', invoice: 'T1234567890112' },
+      { category: '会議費',    description: '撮影 朝食代 計1名',                                     monthDay: '12/1',  amount: 610,   tax: '8%軽減', invoice: 'T1234567890113' },
+      { category: '会議費',    description: '撮影 昼食代 計33名',                                    monthDay: '12/1',  amount: 36300, tax: '8%軽減', invoice: 'T1234567890114' },
+      { category: '会議費',    description: '撮影 夕食代 計4名',                                     monthDay: '12/1',  amount: 4300,  tax: '10%',   invoice: 'T1234567890115' },
+      { category: '会議費',    description: '撮影 昼食代 計11名',                                    monthDay: '12/22', amount: 9010,  tax: '8%軽減', invoice: 'T1234567890116' },
+      { category: '旅費交通費①', description: '打合せ 駐車場代',                                     monthDay: '10/21', amount: 2000,  tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: 'ロケハン 駐車場代',                                   monthDay: '10/21', amount: 550,   tax: '10%',   invoice: 'T1234567890118' },
+      { category: '旅費交通費①', description: '撮影 タクシー代（早朝出発）計1名',                    monthDay: '10/31', amount: 4600,  tax: '10%',   invoice: 'T1234567890123' },
+      { category: '旅費交通費①', description: '撮影 駐車場代（早朝出発）計1名',                      monthDay: '10/31', amount: 1540,  tax: '10%',   invoice: 'T1234567890124' },
+      { category: '旅費交通費①', description: '撮影 駐車場代',                                      monthDay: '11/30', amount: 700,   tax: '10%',   invoice: 'T1234567890125' },
+      { category: '旅費交通費①', description: '撮影 駐車場代',                                      monthDay: '12/22', amount: 400,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費①', description: '撮影 駐車場代',                                      monthDay: '12/22', amount: 400,   tax: '10%',   invoice: '' },
+      { category: '旅費交通費②', description: '撮影 宿泊代 計4名',                                  monthDay: '10/30', amount: 24885, tax: '10%',   invoice: 'T1234567890130' },
+      { category: '旅費交通費②', description: '撮影 宿泊代 計1名',                                  monthDay: '11/30', amount: 5276,  tax: '10%',   invoice: '' },
+      { category: '旅費交通費②', description: '撮影 宿泊代 計4名',                                  monthDay: '11/30', amount: 28000, tax: '10%',   invoice: 'T1234567890132' },
+      { category: '車両費',    description: 'ロケハン 軽油代',                                      monthDay: '10/21', amount: 2199,  tax: '10%',   invoice: 'T1234567890133' },
+      { category: '車両費',    description: '撮影 軽油代',                                          monthDay: '10/31', amount: 3621,  tax: '10%',   invoice: 'T1234567890134' },
+      { category: '車両費',    description: 'ロケハン 軽油代',                                      monthDay: '11/21', amount: 1300,  tax: '10%',   invoice: 'T1234567890135' },
+      { category: '制作諸経費', description: '撮影用備品代（ゴーグル）',                             monthDay: '10/28', amount: 2200,  tax: '10%',   invoice: 'T1234567890136' },
+      { category: '制作諸経費', description: '撮影用備品代（ホワイトボード）',                       monthDay: '10/28', amount: 2200,  tax: '10%',   invoice: 'T1234567890137' },
+      { category: '制作諸経費', description: '撮影用備品代（白・赤布）',                             monthDay: '10/30', amount: 1796,  tax: '10%',   invoice: 'T1234567890138' },
+      { category: '制作諸経費', description: '撮影用備品代（マグネットシート）',                     monthDay: '10/30', amount: 110,   tax: '10%',   invoice: 'T1234567890139' },
+      { category: '制作諸経費', description: '撮影用備品代（タオル・突っ張り棒）',                   monthDay: '10/30', amount: 11744, tax: '10%',   invoice: 'T1234567890140' },
+      { category: '制作諸経費', description: '撮影用備品代（カイロ）',                               monthDay: '11/1',  amount: 1300,  tax: '10%',   invoice: 'T1234567890141' },
+      { category: '制作諸経費', description: '撮影用ケータリング代',                                 monthDay: '11/30', amount: 8695,  tax: '8%軽減', invoice: 'T1234567890142' },
+      { category: '制作諸経費', description: '配送費（トランシーバー返却）',                         monthDay: '12/2',  amount: 1550,  tax: '10%',   invoice: 'T1234567890143' },
+    ]
+  },
+  {
+    id: 'EXP-2604-P02',
+    projectName: '駅伝2024告知ムービー',
+    ledgerNo: '23po5010-002',
+    applicant: '平田',
+    date: '2026-04-05',
+    purpose: '撮影',
+    budget: 250000,
+    settled: 191394,
+    status: 'approved',
+    dept: '撮影課',
+    items: [
+      { category: '会議費',    description: '撮影 夕食代 計4名',                              monthDay: '12/11', amount: 7880,  tax: '10%', invoice: 'T1234567890201' },
+      { category: '会議費',    description: '撮影 朝食代 計1名',                              monthDay: '12/12', amount: 700,   tax: '10%', invoice: 'T1234567890202' },
+      { category: '会議費',    description: '撮影 朝食代 計1名',                              monthDay: '12/12', amount: 700,   tax: '10%', invoice: 'T1234567890203' },
+      { category: '会議費',    description: '撮影 朝食代 計1名',                              monthDay: '12/12', amount: 700,   tax: '10%', invoice: 'T1234567890204' },
+      { category: '会議費',    description: '撮影 朝食代 計1名',                              monthDay: '12/12', amount: 700,   tax: '10%', invoice: 'T1234567890205' },
+      { category: '会議費',    description: '撮影 飲料代 計4名（自販機）',                    monthDay: '12/12', amount: 600,   tax: '10%', invoice: '' },
+      { category: '会議費',    description: '撮影 夕食代 計4名',                              monthDay: '12/12', amount: 7200,  tax: '10%', invoice: 'T1234567890207' },
+      { category: '会議費',    description: '撮影 飲料代 計4名',                              monthDay: '12/12', amount: 1020,  tax: '10%', invoice: 'T1234567890208' },
+      { category: '会議費',    description: '撮影 朝食代 計4名',                              monthDay: '12/13', amount: 3564,  tax: '10%', invoice: 'T1234567890209' },
+      { category: '制作諸経費', description: '撮影 カーフェリー バスタオルレンタル代',          monthDay: '12/11', amount: 800,   tax: '10%', invoice: 'T1234567890210' },
+      { category: '制作諸経費', description: '撮影 カーフェリー バスタオルレンタル代',          monthDay: '12/12', amount: 600,   tax: '10%', invoice: 'T1234567890211' },
+      { category: '制作諸経費', description: '撮影 陸上競技場 撮影使用料',                    monthDay: '12/12', amount: 10420, tax: '10%', invoice: '' },
+      { category: '旅費交通費①', description: '撮影 カーフェリー代 神戸→宮崎 計4名',          monthDay: '12/11', amount: 74170, tax: '10%', invoice: 'T1234567890213' },
+      { category: '旅費交通費①', description: '撮影 カーフェリー代 宮崎→神戸 計4名',          monthDay: '12/12', amount: 74170, tax: '10%', invoice: 'T1234567890214' },
+      { category: '旅費交通費①', description: 'MA 電車代 計1名',                             monthDay: '12/25', amount: 190,   tax: '10%', invoice: '' },
+      { category: '旅費交通費②', description: '撮影 前日入りホテル宿泊 計1名',                monthDay: '12/11', amount: 7980,  tax: '10%', invoice: 'T1234567890216' },
+    ]
+  },
+  {
+    id: 'EXP-2604-P03',
+    projectName: 'ソフトボール部 選手紹介映像2026改訂',
+    ledgerNo: '25po5159-002',
+    applicant: '佐藤 一郎',
+    date: '2026-03-24',
+    purpose: '撮影',
+    budget: 50000,
+    settled: 32256,
+    status: 'rejected',
+    dept: '制作課',
+    items: [
+      { category: '会議費',    description: '軽食費（選手用）',                                monthDay: '2/24', amount: 2371,  tax: '8%軽減', invoice: 'T1234567890301' },
+      { category: '会議費',    description: '飲料費（選手用）',                                monthDay: '2/24', amount: 804,   tax: '8%軽減', invoice: 'T1234567890302' },
+      { category: '会議費',    description: '軽食費 計9名',                                   monthDay: '2/25', amount: 2991,  tax: '8%軽減', invoice: 'T1234567890303' },
+      { category: '会議費',    description: '昼食費 計9名',                                   monthDay: '2/25', amount: 10110, tax: '10%',   invoice: 'T1234567890304' },
+      { category: '会議費',    description: '飲料費（自動販売機）',                            monthDay: '2/25', amount: 2050,  tax: '8%軽減', invoice: '' },
+      { category: '旅費交通費①', description: '駐車場代',                                     monthDay: '2/25', amount: 850,   tax: '10%',   invoice: 'T1234567890306' },
+      { category: '車両費',    description: '制作車レンタカー燃料',                            monthDay: '2/25', amount: 1610,  tax: '10%',   invoice: 'T1234567890307' },
+      { category: '制作諸経費', description: 'USB変換ケーブル',                                monthDay: '2/12', amount: 2970,  tax: '10%',   invoice: 'T1234567890308' },
+      { category: '制作諸経費', description: 'クロスガファーテープ',                           monthDay: '2/19', amount: 8500,  tax: '10%',   invoice: '' },
+    ]
+  }
+];
+
+// ============================================================
+// 科目マッピング（精算書 → 弥生科目）
+// ============================================================
+const CATEGORY_MAP = {
+  '会議費':      '[製]会議費',
+  '旅費交通費①': '[製]旅費交通費',
+  '旅費交通費②': '[製]旅費交通費',
+  '車両費':      '車両費',
+  '制作諸経費':  '[製]制作諸経費',
+  '消耗品費':    '[製]消耗品費',
+  '事務用品代':  '事務用品費',
+  '通信費':      '通信費',
+  '荷造り運賃発送費': '荷造運搬費',
+  'その他':      '雑費',
+};
+
+// 税区分マッピング
+const TAX_MAP = {
+  '10%':   { kubun: '課対仕入10%', keisan: '内税', rate: 10/110 },
+  '8%軽減': { kubun: '課対仕入8%（軽）', keisan: '内税', rate: 8/108 },
+  '非課税': { kubun: '非課税仕入', keisan: '—', rate: 0 },
+};
+
+// ステータスラベル
+const STATUS_LABEL = { pending: '承認待ち', approved: '承認済み', rejected: '差し戻し' };
+
+// ============================================================
+// 状態
+// ============================================================
+let currentFilter = 'all';
+let currentGroupView = 'all';
+let selectedRow = null;
+const OPENING_BALANCE = 696429;
+
+// ============================================================
+// データ集約（精算明細書簡略化と同じルール）
+// ============================================================
+function aggregateItems(projects) {
+  const groups = new Map();
+  projects.forEach(p => {
+    p.items.forEach(it => {
+      const hasInvoice = it.invoice ? 'あり' : 'なし';
+      const key = `${p.id}|${it.category}|${it.tax}|${hasInvoice}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          project: p,
+          category: it.category,
+          tax: it.tax,
+          hasInvoice,
+          items: [],
+        });
+      }
+      groups.get(key).items.push(it);
+    });
+  });
+
+  const rows = [];
+  groups.forEach(g => {
+    const p = g.project;
+    const total = g.items.reduce((s, it) => s + (it.amount || 0), 0);
+    const taxInfo = TAX_MAP[g.tax] || TAX_MAP['10%'];
+    const taxAmt = Math.round(total * taxInfo.rate);
+    const dates = g.items.map(it => it.monthDay).filter(Boolean);
+    const dateRange = dates.length > 0
+      ? (dates[0] === dates[dates.length-1] ? dates[0] : `${dates[0]}〜${dates[dates.length-1]}`)
+      : '—';
+
+    // 摘要：日付 内容（案件名 帳合No.）/申請者名
+    const contentDesc = g.category === '旅費交通費②' ? '宿泊代'
+      : g.category === '旅費交通費①' ? '交通費'
+      : g.category === '会議費'       ? '飲食代'
+      : g.category === '車両費'       ? '車両費'
+      : g.category === '制作諸経費'   ? '制作諸経費'
+      : g.category;
+    const summary = `${dateRange}${contentDesc}（${p.projectName} ${p.ledgerNo}）/${p.applicant}`;
+
+    const invoice = g.hasInvoice === 'あり' ? '適格' : '区分記載';
+    const deduction = g.hasInvoice === 'あり' ? '100%' : '80%経過措置';
+
+    rows.push({
+      project: p,
+      category: g.category,
+      yayoiSubj: CATEGORY_MAP[g.category] || g.category,
+      tax: g.tax,
+      taxKubun: taxInfo.kubun,
+      taxKeisan: taxInfo.keisan,
+      taxAmt,
+      total,
+      dateRange,
+      summary,
+      invoice,
+      deduction,
+      itemCount: g.items.length,
+    });
+  });
+  return rows;
+}
+
+// ============================================================
+// フィルタ
+// ============================================================
+function setFilter(f) {
+  currentFilter = f;
+  document.getElementById('btn-filter-all').style.background     = f === 'all'      ? '#b8d4ff' : '';
+  document.getElementById('btn-filter-approved').style.background = f === 'approved' ? '#b8d4ff' : '';
+  renderLedger();
+}
+
+function setGroupView(v) {
+  currentGroupView = v;
+  document.getElementById('chip-all').classList.toggle('active',     v === 'all');
+  document.getElementById('chip-summary').classList.toggle('active',  v === 'summary');
+  renderLedger();
+}
+
+function getFilteredProjects() {
+  let ps = dummyProjects;
+  if (currentFilter === 'approved') ps = ps.filter(p => p.status === 'approved');
+  const dept = document.getElementById('dept-select').value;
+  if (dept !== 'all') ps = ps.filter(p => p.dept === dept);
+  const period = document.getElementById('period-select').value;
+  // period filter is informational for demo
+  return ps;
+}
+
+// ============================================================
+// テーブル描画
+// ============================================================
+function renderLedger() {
+  const projects = getFilteredProjects();
+
+  // ヘッダー列
+  const headerRow = document.getElementById('table-header-row');
+  headerRow.innerHTML = `
+    <th style="width:36px;">伝票No.</th>
+    <th style="width:60px;">部門</th>
+    <th style="width:110px;">相手勘定科目</th>
+    <th style="width:105px;">税区分</th>
+    <th style="width:7px;"></th>
+    <th style="width:75px;">支出金額</th>
+    <th style="width:60px;">貸方税額</th>
+    <th style="width:80px;">残高</th>
+    <th>摘要</th>
+    <th style="width:62px;">請求書区分</th>
+    <th style="width:75px;">仕入控除</th>
+    <th style="width:48px;">状態</th>
+  `;
+
+  const tbody = document.getElementById('ledger-body');
+  let rows = [];
+
+  if (currentGroupView === 'summary') {
+    // 集計ビュー（精算明細書簡略化相当）
+    rows = aggregateItems(projects);
+  } else {
+    // 明細ビュー（全件）
+    projects.forEach(p => {
+      p.items.forEach(it => {
+        const taxInfo = TAX_MAP[it.tax] || TAX_MAP['10%'];
+        const taxAmt = Math.round((it.amount || 0) * taxInfo.rate);
+        const hasInv = it.invoice ? 'あり' : 'なし';
+        rows.push({
+          project: p,
+          category: it.category,
+          yayoiSubj: CATEGORY_MAP[it.category] || it.category,
+          tax: it.tax,
+          taxKubun: taxInfo.kubun,
+          taxKeisan: taxInfo.keisan,
+          taxAmt,
+          total: it.amount || 0,
+          dateRange: it.monthDay || '—',
+          summary: `${it.monthDay || ''}${it.description}（${p.projectName} ${p.ledgerNo}）/${p.applicant}`,
+          invoice: hasInv === 'あり' ? '適格' : '区分記載',
+          deduction: hasInv === 'あり' ? '100%' : '80%経過措置',
+          itemCount: 1,
+        });
+      });
+    });
+  }
+
+  const totalExpense = rows.reduce((s, r) => s + r.total, 0);
+  let balance = OPENING_BALANCE;
+
+  // ステータス更新
+  document.getElementById('header-count').textContent = `件数：${rows.length}件`;
+  document.getElementById('header-total').textContent = `支出合計：¥${totalExpense.toLocaleString()}`;
+  document.getElementById('sb-count').textContent = `伝票数：${rows.length}件`;
+  document.getElementById('period-expense').textContent = `¥${totalExpense.toLocaleString()}`;
+  document.getElementById('closing-balance').textContent = `¥${(OPENING_BALANCE - totalExpense).toLocaleString()}`;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:20px;color:#888;">表示するデータがありません</td></tr>`;
+    return;
+  }
+
+  // 前月残高行
+  let html = `<tr class="opening-row">
+    <td style="text-align:center;">—</td>
+    <td></td>
+    <td colspan="3" style="font-style:italic;color:#555;">前月繰越</td>
+    <td class="num"></td>
+    <td class="num"></td>
+    <td class="balance">¥${OPENING_BALANCE.toLocaleString()}</td>
+    <td colspan="4" style="color:#888;font-size:10px;">前期繰越残高</td>
+  </tr>`;
+
+  rows.forEach((r, i) => {
+    balance -= r.total;
+    const statusBadge = r.project.status === 'approved'
+      ? `<span style="color:#006600;font-weight:700;">承認</span>`
+      : r.project.status === 'pending'
+      ? `<span style="color:#cc6600;">待機</span>`
+      : `<span style="color:#cc0000;">差戻</span>`;
+
+    const invClass = r.invoice === '適格' ? 'tekikaku' : 'kubun';
+
+    html += `<tr data-idx="${i}">
+      <td style="text-align:center;">${i + 1}</td>
+      <td style="font-size:10px;">${r.project.dept}</td>
+      <td>${r.yayoiSubj}</td>
+      <td class="tax-col">${r.taxKubun} / ${r.taxKeisan}</td>
+      <td style="width:7px;padding:0;background:${r.tax === '8%軽減' ? '#fffacc' : '#fff'};"></td>
+      <td class="num">¥${r.total.toLocaleString()}</td>
+      <td class="num" style="font-size:10px;">¥${r.taxAmt.toLocaleString()}</td>
+      <td class="balance">¥${balance.toLocaleString()}</td>
+      <td style="font-size:10px;max-width:300px;overflow:hidden;text-overflow:ellipsis;">${r.summary}</td>
+      <td class="inv-col ${invClass}">${r.invoice}</td>
+      <td class="inv-col" style="font-size:10px;">${r.deduction}</td>
+      <td style="text-align:center;">${statusBadge}</td>
+    </tr>`;
+  });
+
+  // 合計行
+  const totalTax = rows.reduce((s, r) => s + r.taxAmt, 0);
+  html += `<tr class="total-row">
+    <td colspan="4" style="text-align:center;font-size:11px;">合　　　計</td>
+    <td></td>
+    <td class="num">¥${totalExpense.toLocaleString()}</td>
+    <td class="num">¥${totalTax.toLocaleString()}</td>
+    <td class="num">¥${(OPENING_BALANCE - totalExpense).toLocaleString()}</td>
+    <td colspan="4"></td>
+  </tr>`;
+
+  tbody.innerHTML = html;
+
+  // 行クリック
+  tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
+    tr.addEventListener('click', () => {
+      tbody.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
+      tr.classList.add('selected');
+    });
+  });
+}
+
+// ============================================================
+// CSV出力（弥生インポート形式）
+// ============================================================
+document.getElementById('btn-csv-export').addEventListener('click', () => {
+  const projects = getFilteredProjects();
+  const rows = currentGroupView === 'summary'
+    ? aggregateItems(projects)
+    : (() => {
+        const r = [];
+        projects.forEach(p => p.items.forEach(it => {
+          const taxInfo = TAX_MAP[it.tax] || TAX_MAP['10%'];
+          const taxAmt = Math.round((it.amount||0) * taxInfo.rate);
+          const hasInv = it.invoice ? 'あり' : 'なし';
+          r.push({
+            project: p, category: it.category,
+            yayoiSubj: CATEGORY_MAP[it.category] || it.category,
+            tax: it.tax, taxKubun: taxInfo.kubun, taxKeisan: taxInfo.keisan,
+            taxAmt, total: it.amount||0, dateRange: it.monthDay||'',
+            summary: `${it.monthDay||''}${it.description}（${p.projectName} ${p.ledgerNo}）/${p.applicant}`,
+            invoice: hasInv === 'あり' ? '適格' : '区分記載',
+            deduction: hasInv === 'あり' ? '100%' : '80%経過措置',
+          });
+        }));
+        return r;
+      })();
+
+  const headers = ['伝票No.','部門','相手勘定科目','税区分','税計算区分','支出金額','貸方税額','摘要','請求書区分','仕入税額控除','案件名','帳合No.','申請者','状態'];
+  const csvRows = rows.map((r, i) => [
+    i+1, r.project.dept, r.yayoiSubj, r.taxKubun, r.taxKeisan,
+    r.total, r.taxAmt, r.summary, r.invoice, r.deduction,
+    r.project.projectName, r.project.ledgerNo, r.project.applicant,
+    STATUS_LABEL[r.project.status] || r.project.status,
+  ]);
+  const csv  = [headers, ...csvRows].map(row => row.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = '弥生現金出納帳.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ============================================================
+// 初期描画
+// ============================================================
+setFilter('all');
+renderLedger();
+</script>
+</body>
+</html>
